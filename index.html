@@ -3461,18 +3461,22 @@ async function signupWithNickname(){
 
     session=r.data.session;
 
-    const profileInsert = await db
+    // 회원가입 직후 profiles 행은 Supabase 트리거(handle_new_user)가
+    // 이미 자동으로 만들어줍니다. 여기서 다시 INSERT하면
+    // profiles PK(id) 중복으로 'Database error saving new user'가 발생합니다.
+    // 따라서 트리거가 만든 행을 UPDATE해서 가입 상태를 pending으로 맞춥니다.
+    const profileUpdate = await db
       .from('profiles')
-      .insert({
-        id:r.data.user.id,
+      .update({
         nickname,
         role:'user',
         status:'pending'
-      });
+      })
+      .eq('id',r.data.user.id);
 
-    if(profileInsert.error){
+    if(profileUpdate.error){
       await db.auth.signOut();
-      throw profileInsert.error;
+      throw profileUpdate.error;
     }
 
     await db.auth.signOut();
