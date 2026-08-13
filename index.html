@@ -3376,8 +3376,14 @@ async function loginWithNickname(){
   $('authLoginBtn').disabled=true;
 
   try{
+    // 최초 관리자 토리아빠는 기존 Supabase Auth 계정(koreabbom@gmail.com)을 사용합니다.
+    // 신규 회원은 닉네임 기반 가상 이메일을 그대로 사용합니다.
+    const loginEmail = nickname === '토리아빠'
+      ? 'koreabbom@gmail.com'
+      : authEmailFromNickname(nickname);
+
     const r = await db.auth.signInWithPassword({
-      email:authEmailFromNickname(nickname),
+      email:loginEmail,
       password:authPasswordFromCode(code)
     });
 
