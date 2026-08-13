@@ -239,7 +239,6 @@ function signature(deck){
       .map(h => String(h.name || '').trim())
       .sort()
   );
-})));
 }
 
 function miniDeck(side){
@@ -376,18 +375,14 @@ function extractDecks(battles,nickname,clan=''){
   /*
     battles는 최신순이다.
     같은 3명의 장수 조합은 하나의 덱으로 묶는다.
-
-    가장 먼저 발견되는 데이터가 가장 최근 데이터이므로,
-    승급/레벨/전법이 변경된 경우 최신 상태를 표시한다.
-
-    단, 실제 전투 기록 자체는 건드리지 않는다.
+    가장 최근 데이터가 검색 화면의 최신 상태가 된다.
+    실제 전투 기록은 변경하지 않는다.
   */
   for(const b of battles){
     for(const side of [b.attacker,b.defender]){
 
       if(!side || side.player!==nickname) continue;
       if(clan && side.clan!==clan) continue;
-
       if(!Array.isArray(side.deck) || side.deck.length!==3) continue;
 
       const key=signature(side.deck);
@@ -406,9 +401,6 @@ function extractDecks(battles,nickname,clan=''){
 
   return [...map.values()]
     .sort((a,b)=>new Date(b.last)-new Date(a.last));
-}
-}
-return [...map.values()].sort((a,b)=>new Date(b.last)-new Date(a.last));
 }
 
 async function loadBattles(){
