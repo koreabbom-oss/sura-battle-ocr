@@ -50,6 +50,186 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 .battleDetail{border:1px solid #3a4650;border-radius:14px;padding:16px;margin-top:10px;background:#090e13}.battleDetail.hidden{display:none}
 .vs{text-align:center;font-weight:900;color:#d8ae54;padding:10px}.empty{text-align:center;padding:30px;color:#76838e;border:1px dashed #34414c;border-radius:14px}
 .loadMoreWrap{text-align:center;margin-top:14px}
+
+/* =========================
+   GLOBAL STATISTICS
+========================= */
+
+.statsSearchRow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:end;
+}
+
+.statsHeroHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  padding:18px;
+  border:1px solid #34424e;
+  border-radius:16px;
+  background:linear-gradient(135deg,#151d24,#0b1015);
+  margin-bottom:16px;
+}
+
+.statsHeroName{
+  font-size:28px;
+  font-weight:900;
+}
+
+.statsHeroSub{
+  color:#8d9aa5;
+  font-size:12px;
+  margin-top:6px;
+}
+
+.statsRate{
+  font-size:30px;
+  font-weight:900;
+  color:#d8ae54;
+  text-align:right;
+}
+
+.statsCards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.statsPanel{
+  border:1px solid #2e3b46;
+  border-radius:14px;
+  padding:15px;
+  background:#0c1218;
+}
+
+.statsPanel h3{
+  margin:0 0 12px;
+  font-size:16px;
+}
+
+.statsPanel .big{
+  font-size:24px;
+  font-weight:900;
+  color:#eef2f5;
+}
+
+.statsPanel .caption{
+  color:#7e8a94;
+  font-size:11px;
+  margin-top:4px;
+}
+
+.statsColumns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:14px;
+}
+
+.statsTable{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.statsTable th,
+.statsTable td{
+  padding:10px 7px;
+  border-bottom:1px solid #202b34;
+  text-align:left;
+  font-size:13px;
+}
+
+.statsTable th{
+  color:#7f8b95;
+  font-size:11px;
+}
+
+.statsTable td:last-child,
+.statsTable th:last-child{
+  text-align:right;
+}
+
+.statBar{
+  height:6px;
+  background:#1d2730;
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:5px;
+}
+
+.statBar > span{
+  display:block;
+  height:100%;
+  background:#d8ae54;
+  border-radius:99px;
+}
+
+.counterWin{
+  color:#7fd39a;
+  font-weight:900;
+}
+
+.counterLoss{
+  color:#ff8585;
+  font-weight:900;
+}
+
+.statsNote{
+  color:#77848e;
+  font-size:11px;
+  margin-top:10px;
+  line-height:1.6;
+}
+
+.statsRank{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.statsRankItem{
+  border:1px solid #2c3944;
+  border-radius:10px;
+  padding:11px;
+  background:#10171e;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+
+.statsRankItem strong{
+  display:block;
+}
+
+.statsRankItem small{
+  color:#84919b;
+}
+
+@media(max-width:760px){
+  .statsSearchRow{
+    grid-template-columns:1fr;
+  }
+
+  .statsCards,
+  .statsColumns,
+  .statsRank{
+    grid-template-columns:1fr;
+  }
+
+  .statsHeroHeader{
+    flex-direction:column;
+  }
+
+  .statsRate{
+    text-align:left;
+  }
+}
+
 @media(max-width:760px){.quick,.grid2{grid-template-columns:1fr}.heroGrid{grid-template-columns:1fr 1fr}.heroGrid .nameField{grid-column:1/-1}.techGrid,.cards,.statsGrid{grid-template-columns:1fr}.battleSummary{align-items:flex-start;flex-direction:column}.battleSummary .date{white-space:normal}}
 </style>
 </head>
@@ -64,6 +244,7 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 <div class="quick">
 <button id="btnRegister">⚔ 전황 등록</button>
 <button id="btnSearch" class="secondary">⌕ 유저 / 덱 검색</button>
+<button id="btnStats" class="secondary">📊 전체 통계</button>
 </div>
 
 <div id="loginCard" class="card hidden">
@@ -131,6 +312,50 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 <div id="deckResults"></div>
 <div id="battleResults"></div>
 </section>
+
+
+<!-- =========================
+     GLOBAL STATISTICS PAGE
+========================= -->
+
+<section id="statsPage" class="card hidden">
+
+  <div class="title">
+    <i></i>
+    <h2>전체 통계</h2>
+  </div>
+
+  <div class="sub">
+    모든 유저가 등록한 전투 데이터를 기준으로 장수와 전법 통계를 계산합니다.
+  </div>
+
+  <div class="notice">
+    ※ 장수 승률은 해당 장수가 포함된 전투의 결과를 기준으로 계산합니다.
+    전법 사용률은 한 장수가 여러 전법을 동시에 사용할 수 있어 합계가 100%를 넘을 수 있습니다.
+  </div>
+
+  <div class="statsSearchRow">
+
+    <div class="field">
+      <label>장수 검색</label>
+      <input
+        id="statsHeroSearch"
+        placeholder="예: 장보"
+      >
+    </div>
+
+    <button id="statsSearchBtn">
+      🔎 통계 검색
+    </button>
+
+  </div>
+
+  <div id="statsMsg"></div>
+
+  <div id="statsContent"></div>
+
+</section>
+
 </main>
 
 <script>
@@ -456,6 +681,720 @@ $('battleResults').innerHTML=`<div class="err">${esc(e.message||e)}</div>`;
 }
 }
 
+
+/* =========================================================
+   GLOBAL STATISTICS
+========================================================= */
+
+function normalizeHeroName(name){
+  return String(name || '').trim();
+}
+
+function collectHeroStats(battles){
+
+  const map = new Map();
+
+  for(const battle of battles){
+
+    const sides = [
+      {
+        side: battle.attacker,
+        won: battle.result === '승리'
+      },
+      {
+        side: battle.defender,
+        won: battle.result === '패배'
+      }
+    ];
+
+    for(const item of sides){
+
+      const side = item.side;
+
+      if(!side || !Array.isArray(side.deck)){
+        continue;
+      }
+
+      for(const hero of side.deck){
+
+        const name = normalizeHeroName(hero.name);
+
+        if(!name){
+          continue;
+        }
+
+        if(!map.has(name)){
+          map.set(name,{
+            name,
+            total:0,
+            wins:0,
+            losses:0,
+            draws:0,
+            tactics:new Map(),
+            opponents:new Map()
+          });
+        }
+
+        const stat = map.get(name);
+
+        stat.total++;
+
+        if(battle.result === '무승부'){
+          stat.draws++;
+        }else if(item.won){
+          stat.wins++;
+        }else{
+          stat.losses++;
+        }
+
+        for(const tactic of (hero.tactics || [])){
+
+          const t = String(tactic || '').trim();
+
+          if(!t){
+            continue;
+          }
+
+          stat.tactics.set(
+            t,
+            (stat.tactics.get(t) || 0) + 1
+          );
+
+        }
+
+        const opponentSide =
+          side === battle.attacker
+            ? battle.defender
+            : battle.attacker;
+
+        if(
+          opponentSide &&
+          Array.isArray(opponentSide.deck)
+        ){
+
+          for(const opponentHero of opponentSide.deck){
+
+            const opponentName =
+              normalizeHeroName(
+                opponentHero.name
+              );
+
+            if(!opponentName || opponentName === name){
+              continue;
+            }
+
+            if(!stat.opponents.has(opponentName)){
+              stat.opponents.set(
+                opponentName,
+                {
+                  wins:0,
+                  losses:0,
+                  draws:0
+                }
+              );
+            }
+
+            const matchup =
+              stat.opponents.get(
+                opponentName
+              );
+
+            if(battle.result === '무승부'){
+              matchup.draws++;
+            }else if(item.won){
+              matchup.wins++;
+            }else{
+              matchup.losses++;
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+  }
+
+  return map;
+
+}
+
+
+function heroWinRate(stat){
+
+  const decided =
+    stat.wins +
+    stat.losses;
+
+  return decided > 0
+    ? (stat.wins / decided) * 100
+    : 0;
+
+}
+
+
+function formatPct(value){
+
+  return Number(value || 0).toFixed(1) + '%';
+
+}
+
+
+function heroStatsHTML(stat){
+
+  const rate =
+    heroWinRate(stat);
+
+  const tactics =
+    [...stat.tactics.entries()]
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,10);
+
+  const opponents =
+    [...stat.opponents.entries()]
+      .map(
+        ([name,data])=>({
+
+          name,
+
+          ...data,
+
+          decided:
+            data.wins +
+            data.losses,
+
+          rate:
+            (
+              data.wins +
+              data.losses
+            ) > 0
+              ?
+                (
+                  data.wins /
+                  (
+                    data.wins +
+                    data.losses
+                  )
+                ) * 100
+              :
+                0
+
+        })
+      )
+      .filter(
+        x => x.decided > 0
+      );
+
+  const bestOpponents =
+    opponents
+      .filter(x=>x.decided >= 3)
+      .sort(
+        (a,b)=>
+          b.rate-a.rate ||
+          b.decided-a.decided
+      )
+      .slice(0,8);
+
+  const worstOpponents =
+    opponents
+      .filter(x=>x.decided >= 3)
+      .sort(
+        (a,b)=>
+          a.rate-b.rate ||
+          b.decided-a.decided
+      )
+      .slice(0,8);
+
+  return `
+
+    <div class="statsHeroHeader">
+
+      <div>
+
+        <div class="statsHeroName">
+          ${esc(stat.name)}
+        </div>
+
+        <div class="statsHeroSub">
+          등록 전투 ${stat.total}회
+        </div>
+
+      </div>
+
+      <div>
+
+        <div class="muted">
+          승률
+        </div>
+
+        <div class="statsRate">
+          ${formatPct(rate)}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="statsCards">
+
+      <div class="statsPanel">
+        <div class="caption">전체 전투</div>
+        <div class="big">${stat.total}</div>
+      </div>
+
+      <div class="statsPanel">
+        <div class="caption">승리</div>
+        <div class="big">${stat.wins}</div>
+      </div>
+
+      <div class="statsPanel">
+        <div class="caption">패배</div>
+        <div class="big">${stat.losses}</div>
+      </div>
+
+      <div class="statsPanel">
+        <div class="caption">무승부</div>
+        <div class="big">${stat.draws}</div>
+      </div>
+
+    </div>
+
+
+    <div class="statsColumns">
+
+
+      <div class="statsPanel">
+
+        <h3>
+          📜 많이 사용된 전법
+        </h3>
+
+        ${
+          tactics.length
+            ?
+
+              `<table class="statsTable">
+
+                <thead>
+                  <tr>
+                    <th>전법</th>
+                    <th>사용</th>
+                    <th>사용률</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  ${
+                    tactics
+                      .map(
+                        ([name,count])=>{
+
+                          const pct =
+                            stat.total > 0
+                              ?
+                                (count/stat.total)*100
+                              :
+                                0;
+
+                          return `
+
+                            <tr>
+
+                              <td>
+                                ${esc(name)}
+
+                                <div class="statBar">
+                                  <span
+                                    style="width:${Math.min(pct,100)}%"
+                                  ></span>
+                                </div>
+
+                              </td>
+
+                              <td>
+                                ${count}회
+                              </td>
+
+                              <td>
+                                ${formatPct(pct)}
+                              </td>
+
+                            </tr>
+
+                          `;
+
+                        }
+                      )
+                      .join('')
+                  }
+
+                </tbody>
+
+              </table>`
+
+            :
+
+              `<div class="empty">
+                등록된 전법 데이터가 없습니다.
+              </div>`
+
+        }
+
+      </div>
+
+
+      <div class="statsPanel">
+
+        <h3>
+          ⚔ 상대 장수 전적
+        </h3>
+
+        ${
+          opponents.length
+            ?
+
+              `<table class="statsTable">
+
+                <thead>
+                  <tr>
+                    <th>상대</th>
+                    <th>전적</th>
+                    <th>승률</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  ${
+                    opponents
+                      .sort(
+                        (a,b)=>
+                          b.decided-a.decided
+                      )
+                      .slice(0,15)
+                      .map(
+                        x=>`
+
+                          <tr>
+
+                            <td>
+                              ${esc(x.name)}
+                            </td>
+
+                            <td>
+                              ${x.wins}승
+                              ${x.losses}패
+                            </td>
+
+                            <td>
+                              ${formatPct(x.rate)}
+                            </td>
+
+                          </tr>
+
+                        `
+                      )
+                      .join('')
+                  }
+
+                </tbody>
+
+              </table>`
+
+            :
+
+              `<div class="empty">
+                상대 전적 데이터가 없습니다.
+              </div>`
+
+        }
+
+        <div class="statsNote">
+          상대 전적은 양쪽 덱에 함께 등장한 장수를 기준으로 계산합니다.
+          표본이 너무 작은 경우를 피하기 위해 '많이 이긴/진 장수'에서는 최소 3전 이상만 사용합니다.
+        </div>
+
+      </div>
+
+
+    </div>
+
+
+    <div class="statsColumns">
+
+
+      <div class="statsPanel">
+
+        <h3>
+          🟢 많이 이기는 장수
+        </h3>
+
+        ${
+          bestOpponents.length
+            ?
+
+              `<div class="statsRank">
+
+                ${
+                  bestOpponents
+                    .map(
+                      x=>`
+
+                        <div class="statsRankItem">
+
+                          <div>
+                            <strong>
+                              ${esc(x.name)}
+                            </strong>
+
+                            <small>
+                              ${x.wins}승 ${x.losses}패
+                            </small>
+                          </div>
+
+                          <span class="counterWin">
+                            ${formatPct(x.rate)}
+                          </span>
+
+                        </div>
+
+                      `
+                    )
+                    .join('')
+                }
+
+              </div>`
+
+            :
+
+              `<div class="empty">
+                3전 이상인 상대 전적이 없습니다.
+              </div>`
+
+        }
+
+      </div>
+
+
+      <div class="statsPanel">
+
+        <h3>
+          🔴 많이 지는 장수
+        </h3>
+
+        ${
+          worstOpponents.length
+            ?
+
+              `<div class="statsRank">
+
+                ${
+                  worstOpponents
+                    .map(
+                      x=>`
+
+                        <div class="statsRankItem">
+
+                          <div>
+                            <strong>
+                              ${esc(x.name)}
+                            </strong>
+
+                            <small>
+                              ${x.wins}승 ${x.losses}패
+                            </small>
+                          </div>
+
+                          <span class="counterLoss">
+                            ${formatPct(x.rate)}
+                          </span>
+
+                        </div>
+
+                      `
+                    )
+                    .join('')
+                }
+
+              </div>`
+
+            :
+
+              `<div class="empty">
+                3전 이상인 상대 전적이 없습니다.
+              </div>`
+
+        }
+
+      </div>
+
+
+    </div>
+
+  `;
+
+}
+
+
+async function loadGlobalStats(){
+
+  $('statsMsg').innerHTML = '';
+
+  $('statsContent').innerHTML = '';
+
+  const heroName =
+    $('statsHeroSearch')
+      .value
+      .trim();
+
+  try{
+
+    const battles =
+      await loadBattles();
+
+    const statsMap =
+      collectHeroStats(
+        battles
+      );
+
+    if(!heroName){
+
+      const ranking =
+        [...statsMap.values()]
+          .filter(
+            stat => stat.total >= 10
+          )
+          .sort(
+            (a,b)=>
+              heroWinRate(b) -
+              heroWinRate(a)
+          )
+          .slice(0,20);
+
+      $('statsContent').innerHTML = `
+
+        <div class="statsPanel">
+
+          <h3>
+            🏆 전체 장수 승률 TOP 20
+          </h3>
+
+          ${
+            ranking.length
+              ?
+
+                `<table class="statsTable">
+
+                  <thead>
+                    <tr>
+                      <th>장수</th>
+                      <th>전투</th>
+                      <th>승 / 패</th>
+                      <th>승률</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+
+                    ${
+                      ranking
+                        .map(
+                          (stat,index)=>`
+
+                            <tr>
+
+                              <td>
+                                ${index+1}. ${esc(stat.name)}
+                              </td>
+
+                              <td>
+                                ${stat.total}
+                              </td>
+
+                              <td>
+                                ${stat.wins}승
+                                ${stat.losses}패
+                              </td>
+
+                              <td>
+                                <strong>
+                                  ${formatPct(heroWinRate(stat))}
+                                </strong>
+                              </td>
+
+                            </tr>
+
+                          `
+                        )
+                        .join('')
+                    }
+
+                  </tbody>
+
+                </table>`
+
+              :
+
+                `<div class="empty">
+                  아직 10전 이상인 장수 데이터가 없습니다.
+                </div>`
+
+          }
+
+          <div class="statsNote">
+            ※ 전체 승률 순위는 표본 왜곡을 줄이기 위해 최소 10전 이상인 장수만 표시합니다.
+          </div>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    const stat =
+      statsMap.get(
+        heroName
+      );
+
+    if(!stat){
+
+      $('statsMsg').innerHTML = `
+        <div class="err">
+          '${esc(heroName)}' 장수의 전투 데이터가 없습니다.
+        </div>
+      `;
+
+      return;
+
+    }
+
+    $('statsContent').innerHTML =
+      heroStatsHTML(
+        stat
+      );
+
+  }
+  catch(error){
+
+    $('statsMsg').innerHTML = `
+      <div class="err">
+        통계 불러오기 실패:
+        ${esc(error.message || error)}
+      </div>
+    `;
+
+  }
+
+}
+
+
 async function saveBattle(){
 if(!session){
 $('loginCard').classList.remove('hidden');
@@ -499,15 +1438,25 @@ if(show)$('saveMsg').innerHTML='';
 $('btnRegister').onclick=()=>{
 $('registerPage').classList.remove('hidden');
 $('searchPage').classList.add('hidden');
+$('statsPage').classList.add('hidden');
 };
 $('btnSearch').onclick=()=>{
 $('searchPage').classList.remove('hidden');
 $('registerPage').classList.add('hidden');
+$('statsPage').classList.add('hidden');
+};
+
+$('btnStats').onclick=()=>{
+$('statsPage').classList.remove('hidden');
+$('registerPage').classList.add('hidden');
+$('searchPage').classList.add('hidden');
+loadGlobalStats();
 };
 $('saveBattle').onclick=saveBattle;
 $('resetBattle').onclick=()=>resetBattle();
 $('searchBtn').onclick=search;
 $('allBtn').onclick=allBattles;
+$('statsSearchBtn').onclick=loadGlobalStats;
 
 $('loginBtn').onclick=async()=>{
 const r=await db.auth.signInWithPassword({
