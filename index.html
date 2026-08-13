@@ -51,6 +51,119 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 .vs{text-align:center;font-weight:900;color:#d8ae54;padding:10px}.empty{text-align:center;padding:30px;color:#76838e;border:1px dashed #34414c;border-radius:14px}
 .loadMoreWrap{text-align:center;margin-top:14px}
 
+
+
+
+.topList{
+  display:grid;
+  gap:8px;
+}
+
+.topMoreWrap{
+  margin-top:10px;
+  display:flex;
+  justify-content:center;
+}
+
+/* Active navigation: ONLY the current page is gold */
+.quick .navBtn:not(.active){
+  background:#182636 !important;
+  color:#e7edf2 !important;
+  border-color:#34485a !important;
+}
+
+.quick .navBtn.active{
+  background:#d8ae54 !important;
+  color:#101419 !important;
+  border-color:#d8ae54 !important;
+  box-shadow:0 0 0 1px rgba(216,174,84,.18), 0 6px 18px rgba(216,174,84,.12);
+}
+
+
+/* Ranking highlights */
+.rankItem{
+  position:relative;
+  border:1px solid #2c3944;
+  border-radius:12px;
+  padding:12px 12px 12px 48px;
+  background:#10171e;
+  margin-bottom:8px;
+  overflow:hidden;
+}
+
+.rankItem .rankBadge{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:13px;
+  border:1px solid #394752;
+  background:#18222b;
+}
+
+.rankItem.rank1{
+  border-color:#e6c66a;
+  background:linear-gradient(135deg,rgba(226,193,91,.20),#10171e 58%);
+  box-shadow:0 0 18px rgba(226,193,91,.13), inset 0 0 0 1px rgba(255,231,146,.06);
+}
+.rankItem.rank1 .rankBadge{
+  background:linear-gradient(135deg,#fff1a8,#d8ae54);
+  color:#3c2b00;
+  border-color:#ffe99b;
+  box-shadow:0 0 12px rgba(255,224,116,.5);
+}
+
+.rankItem.rank2{
+  border-color:#bfc9d1;
+  background:linear-gradient(135deg,rgba(191,201,209,.13),#10171e 58%);
+  box-shadow:0 0 12px rgba(191,201,209,.09);
+}
+.rankItem.rank2 .rankBadge{
+  background:linear-gradient(135deg,#f4f7f9,#aeb9c2);
+  color:#273039;
+  border-color:#e6edf2;
+  box-shadow:0 0 9px rgba(220,230,238,.28);
+}
+
+.rankItem.rank3{
+  border-color:#c98a5c;
+  background:linear-gradient(135deg,rgba(183,111,64,.15),#10171e 58%);
+  box-shadow:0 0 10px rgba(183,111,64,.08);
+}
+.rankItem.rank3 .rankBadge{
+  background:linear-gradient(135deg,#e9b17f,#a65d32);
+  color:#35170b;
+  border-color:#e5a777;
+}
+
+.rankItem .rankTitle{
+  font-weight:900;
+}
+
+.rankItem .rankMeta{
+  color:#82909a;
+  font-size:11px;
+  margin-top:4px;
+}
+
+.rankItem .rankValue{
+  font-size:15px;
+  font-weight:900;
+  color:#f1f4f6;
+}
+
+.rankItem.rank1 .rankValue{
+  color:#ffe48a;
+}
+
+
 /* =========================
    GLOBAL STATISTICS
 ========================= */
@@ -755,8 +868,13 @@ $('battleResults').innerHTML=`<div class="err">${esc(e.message||e)}</div>`;
 
 function setActiveNav(id){
   document.querySelectorAll('.navBtn').forEach(btn=>{
-    btn.classList.toggle('active',btn.id===id);
+    btn.classList.remove('active');
   });
+
+  const active = document.getElementById(id);
+  if(active){
+    active.classList.add('active');
+  }
 }
 
 function normalizeHeroName(name){
@@ -1279,94 +1397,147 @@ async function loadGlobalStats(){
 
       const ranking =
         [...statsMap.values()]
-          .filter(
-            stat => stat.total >= 10
-          )
-          .sort(
-            (a,b)=>
-              heroWinRate(b) -
-              heroWinRate(a)
-          )
-          .slice(0,20);
+          .filter(stat => stat.total >= 10)
+          .sort((a,b)=>
+            heroWinRate(b) - heroWinRate(a)
+          );
 
-      $('statsContent').innerHTML =
+      const {heroUse,comboUse} =
+        collectPopularityStats(battles);
 
-        popularityHTML(battles) +
+      const popularHeroes =
+        [...heroUse.entries()]
+          .sort((a,b)=>b[1]-a[1]);
 
-        `
+      const popularCombos =
+        [...comboUse.entries()]
+          .sort((a,b)=>b[1]-a[1]);
+
+      const top10PopularHeroes =
+        popularHeroes.slice(0,10);
+
+      const top10WinRate =
+        ranking.slice(0,10);
+
+      const top10Combos =
+        popularCombos.slice(0,10);
+
+      window.__globalRankingData = {
+        popularHeroes,
+        ranking,
+        popularCombos
+      };
+
+      window.__globalRankingVisible = {
+        popularHeroes:10,
+        ranking:10,
+        popularCombos:10
+      };
+
+      const rankClass = i =>
+        i === 0 ? 'rank1' :
+        i === 1 ? 'rank2' :
+        i === 2 ? 'rank3' : '';
+
+      const rankBadge = i =>
+        i === 0 ? '🥇' :
+        i === 1 ? '🥈' :
+        i === 2 ? '🥉' : (i + 1);
+
+      $('statsContent').innerHTML = `
+
+        <div class="statsColumns">
+
+          <div class="statsPanel">
+            <h3>👑 많이 사용된 장수 TOP 20</h3>
+
+            <div id="popularHeroesList" class="topList">
+              ${
+                top10PopularHeroes.length
+                ? top10PopularHeroes.map(([name,count],i)=>`
+                    <div class="rankItem ${rankClass(i)}">
+                      <div class="rankBadge">${rankBadge(i)}</div>
+                      <div class="rankTitle">${esc(name)}</div>
+                      <div class="rankMeta">전체 등록 전투에서 ${count}회 사용</div>
+                      <div class="rankValue">${count}회</div>
+                    </div>
+                  `).join('')
+                : `<div class="empty">등록된 장수 데이터가 없습니다.</div>`
+              }
+            </div>
+
+            ${
+              popularHeroes.length > 10
+              ? `
+                <div class="topMoreWrap">
+                  <button class="secondary globalRankMoreBtn" data-global-more="popularHeroes">
+                    더보기 · 10개
+                  </button>
+                </div>
+              `
+              : ''
+            }
+          </div>
+
+          <div class="statsPanel">
+            <h3>🔥 많이 사용된 조합 TOP 10</h3>
+
+            <div id="popularCombosList" class="topList">
+              ${
+                top10Combos.length
+                ? top10Combos.map(([combo,count],i)=>{
+                    const names = combo.split(' · ');
+                    return `
+                      <div class="rankItem ${rankClass(i)}">
+                        <div class="rankBadge">${rankBadge(i)}</div>
+                        <div class="rankTitle">${names.map(esc).join(' · ')}</div>
+                        <div class="rankMeta">동일 3장수 조합</div>
+                        <div class="rankValue">${count}회</div>
+                      </div>
+                    `;
+                  }).join('')
+                : `<div class="empty">등록된 조합 데이터가 없습니다.</div>`
+              }
+            </div>
+          </div>
+
+        </div>
 
         <div class="statsPanel">
+          <h3>🏆 전체 장수 승률 TOP 20</h3>
 
-          <h3>
-            🏆 전체 장수 승률 TOP 20
-          </h3>
+          <div id="winRateRankingList" class="topList">
+            ${
+              top10WinRate.length
+              ? top10WinRate.map((stat,i)=>`
+                  <div class="rankItem ${rankClass(i)}">
+                    <div class="rankBadge">${rankBadge(i)}</div>
+                    <div class="rankTitle">${esc(stat.name)}</div>
+                    <div class="rankMeta">
+                      ${stat.total}전 · ${stat.wins}승 ${stat.losses}패
+                    </div>
+                    <div class="rankValue">${formatPct(heroWinRate(stat))}</div>
+                  </div>
+                `).join('')
+              : `<div class="empty">아직 10전 이상인 장수 데이터가 없습니다.</div>`
+            }
+          </div>
 
           ${
-            ranking.length
-              ?
-
-                `<table class="statsTable">
-
-                  <thead>
-                    <tr>
-                      <th>장수</th>
-                      <th>전투</th>
-                      <th>승 / 패</th>
-                      <th>승률</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-
-                    ${
-                      ranking
-                        .map(
-                          (stat,index)=>`
-
-                            <tr>
-
-                              <td>
-                                ${index+1}. ${esc(stat.name)}
-                              </td>
-
-                              <td>
-                                ${stat.total}
-                              </td>
-
-                              <td>
-                                ${stat.wins}승
-                                ${stat.losses}패
-                              </td>
-
-                              <td>
-                                <strong>
-                                  ${formatPct(heroWinRate(stat))}
-                                </strong>
-                              </td>
-
-                            </tr>
-
-                          `
-                        )
-                        .join('')
-                    }
-
-                  </tbody>
-
-                </table>`
-
-              :
-
-                `<div class="empty">
-                  아직 10전 이상인 장수 데이터가 없습니다.
-                </div>`
-
+            ranking.length > 10
+            ? `
+              <div class="topMoreWrap">
+                <button class="secondary globalRankMoreBtn" data-global-more="ranking">
+                  더보기 · 10개
+                </button>
+              </div>
+            `
+            : ''
           }
 
           <div class="statsNote">
             ※ 전체 승률 순위는 표본 왜곡을 줄이기 위해 최소 10전 이상인 장수만 표시합니다.
           </div>
-
         </div>
 
       `;
@@ -1413,6 +1584,72 @@ async function loadGlobalStats(){
 }
 
 
+
+
+document.addEventListener('click',function(e){
+
+  const btn = e.target.closest('.globalRankMoreBtn');
+  if(!btn) return;
+
+  const type = btn.dataset.globalMore;
+  const data = window.__globalRankingData;
+  const visible = window.__globalRankingVisible;
+
+  if(!data || !visible) return;
+
+  visible[type] += 10;
+
+  const rankClass = i =>
+    i === 0 ? 'rank1' :
+    i === 1 ? 'rank2' :
+    i === 2 ? 'rank3' : '';
+
+  const rankBadge = i =>
+    i === 0 ? '🥇' :
+    i === 1 ? '🥈' :
+    i === 2 ? '🥉' : (i + 1);
+
+  if(type === 'popularHeroes'){
+
+    const list = data.popularHeroes;
+
+    $('popularHeroesList').innerHTML =
+      list.slice(0,visible[type]).map(([name,count],i)=>`
+        <div class="rankItem ${rankClass(i)}">
+          <div class="rankBadge">${rankBadge(i)}</div>
+          <div class="rankTitle">${esc(name)}</div>
+          <div class="rankMeta">전체 등록 전투에서 ${count}회 사용</div>
+          <div class="rankValue">${count}회</div>
+        </div>
+      `).join('');
+
+    if(visible[type] >= list.length){
+      btn.remove();
+    }
+  }
+
+  if(type === 'ranking'){
+
+    const list = data.ranking;
+
+    $('winRateRankingList').innerHTML =
+      list.slice(0,visible[type]).map((stat,i)=>`
+        <div class="rankItem ${rankClass(i)}">
+          <div class="rankBadge">${rankBadge(i)}</div>
+          <div class="rankTitle">${esc(stat.name)}</div>
+          <div class="rankMeta">
+            ${stat.total}전 · ${stat.wins}승 ${stat.losses}패
+          </div>
+          <div class="rankValue">${formatPct(heroWinRate(stat))}</div>
+        </div>
+      `).join('');
+
+    if(visible[type] >= list.length){
+      btn.remove();
+    }
+  }
+
+});
 
 document.addEventListener('click',function(e){
 
