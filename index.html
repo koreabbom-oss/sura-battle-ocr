@@ -1315,7 +1315,7 @@ button.secondary{
       <input id="authNickname" placeholder="닉네임" autocomplete="username">
 
       <label>코드</label>
-      <input id="authCode" type="password" placeholder="코드" autocomplete="current-password">
+      <input id="authCode" type="password" placeholder="코드 (6자리 이상)" autocomplete="current-password">
 
       <button id="authLoginBtn" class="authPrimary">로그인</button>
       <button id="authSignupBtn" class="authSecondary">처음이라면 회원가입</button>
@@ -1365,7 +1365,7 @@ button.secondary{
 
 <div id="loginCard" class="card hidden" style="display:none!important">
 <div class="title"><i></i><h2>로그인</h2></div>
-<div class="sub">기존 Supabase 계정으로 로그인합니다.</div>
+<div class="sub">닉네임과 6자리 이상 코드를 입력하세요. 이메일 인증은 필요하지 않습니다.</div>
 <div class="grid2">
 <div class="field"><label>이메일</label><input id="email" type="email"></div>
 <div class="field"><label>비밀번호</label><input id="password" type="password"></div>
@@ -3287,327 +3287,83 @@ document.addEventListener('click',function(e){
 });
 
 
-function authEmailFromNickname(nickname){
-  const n = String(nickname || '').trim().normalize('NFKC').toLowerCase();
-  const encoded = encodeURIComponent(n).replace(/%/g,'').replace(/[^a-z0-9가-힣]+/g,'-');
-  return `member-${encoded || 'user'}@sura-battle.local`;
-}
-
-// 로그인/가입 코드는 260815를 그대로 Supabase Auth 비밀번호로 사용합니다.
-function authPasswordFromCode(code){
-  return code;
-}
+function getMemberToken(){ return localStorage.getItem('sura_member_token') || ''; }
+function setMemberToken(token){ if(token) localStorage.setItem('sura_member_token',token); else localStorage.removeItem('sura_member_token'); }
 
 async function getMyProfile(){
-  if(!session?.user?.id) return null;
-  const r = await db
-    .from('profiles')
-    .select('id,nickname,role,status,clan_name,created_at')
-    .eq('id',session.user.id)
-    .maybeSingle();
+  const token=getMemberToken();
+  if(!token) return null;
+  const r=await db.rpc('member_me',{p_token:token});
   if(r.error) throw r.error;
+  if(!r.data) return null;
   return r.data;
 }
 
 function showAuthMessage(message,type='err'){
-  $('authMsg').innerHTML =
-    `<div class="${type==='ok'?'ok':'err'}">${esc(message)}</div>`;
+  $('authMsg').innerHTML = `<div class="${type==='ok'?'ok':'err'}">${esc(message)}</div>`;
 }
-
-function lockApplication(){
-  $('authGate').classList.remove('hidden');
-  document.querySelector('main').style.visibility='hidden';
-}
-
-function unlockApplication(){
-  $('authGate').classList.add('hidden');
-  document.querySelector('main').style.visibility='visible';
-}
-
-function setAdminVisibility(isAdmin){
-  $('btnAdmin').classList.toggle('hidden',!isAdmin);
-}
+function lockApplication(){ $('authGate').classList.remove('hidden'); document.querySelector('main').style.visibility='hidden'; }
+function unlockApplication(){ $('authGate').classList.add('hidden'); document.querySelector('main').style.visibility='visible'; }
+function setAdminVisibility(isAdmin){ $('btnAdmin').classList.toggle('hidden',!isAdmin); }
 
 async function finishAuthenticatedUser(){
-  const profile = await getMyProfile();
-
-  if(!profile){
-    await db.auth.signOut();
-    lockApplication();
-    showAuthMessage('회원 정보가 확인되지 않습니다. 다시 가입해주세요.');
+  const profile=await getMyProfile();
+  if(!profile){ setMemberToken(''); lockApplication(); setAdminVisibility(false); return false; }
+  if(profile.status!=='approved'){
+    setMemberToken(''); lockApplication(); setAdminVisibility(false); $('pendingBox').classList.remove('hidden');
+    if(profile.status==='rejected') $('pendingBox').innerHTML=`<div class="pendingIcon">🚫</div><strong>가입이 승인되지 않았습니다.</strong><p>관리자에게 문의해주세요.</p>`;
+    else $('pendingBox').innerHTML=`<div class="pendingIcon">⏳</div><strong>관리자 승인 대기 중입니다.</strong><p>승인되면 같은 닉네임과 코드로 로그인할 수 있습니다.</p>`;
     return false;
   }
-
-  if(profile.status !== 'approved'){
-    await db.auth.signOut();
-    lockApplication();
-    $('pendingBox').classList.remove('hidden');
-
-    if(profile.status === 'rejected'){
-      $('pendingBox').innerHTML = `
-        <div class="pendingIcon">🚫</div>
-        <strong>가입이 승인되지 않았습니다.</strong>
-        <p>관리자에게 문의해주세요.</p>
-      `;
-    }
-    return false;
-  }
-
-  $('pendingBox').classList.add('hidden');
-  unlockApplication();
-  setAdminVisibility(profile.role === 'admin');
-  return true;
+  session={user:{id:profile.id},profile};
+  $('pendingBox').classList.add('hidden'); unlockApplication(); setAdminVisibility(profile.role==='admin'); return true;
 }
 
 async function loginWithNickname(){
-  const nickname = $('authNickname').value.trim();
-  const code = $('authCode').value;
-
-  if(!nickname || !code){
-    showAuthMessage('닉네임과 코드를 모두 입력해주세요.');
-    return;
-  }
-
-  if(code.length < 4){
-    showAuthMessage('코드는 4자 이상 입력해주세요.');
-    return;
-  }
-
+  const nickname=$('authNickname').value.trim(), code=$('authCode').value;
+  if(!nickname||!code){ showAuthMessage('닉네임과 코드를 모두 입력해주세요.'); return; }
+  if(code.length<6){ showAuthMessage('코드는 6자 이상 입력해주세요.'); return; }
   $('authLoginBtn').disabled=true;
-
   try{
-    // 최초 관리자 토리아빠는 기존 Supabase Auth 계정(koreabbom@gmail.com)을 사용합니다.
-    // 신규 회원은 닉네임 기반 가상 이메일을 그대로 사용합니다.
-    const loginEmail = nickname === '토리아빠'
-      ? 'koreabbom@gmail.com'
-      : authEmailFromNickname(nickname);
-
-    const r = await db.auth.signInWithPassword({
-      email:loginEmail,
-      password:authPasswordFromCode(code)
-    });
-
-    if(r.error){
-      showAuthMessage('닉네임 또는 코드가 올바르지 않습니다.');
-      return;
-    }
-
-    session=r.data.session;
+    const r=await db.rpc('member_login',{p_nickname:nickname,p_code:code});
+    if(r.error) throw r.error;
+    if(!r.data?.ok) throw new Error('로그인에 실패했습니다.');
+    setMemberToken(r.data.token); session={user:{id:r.data.profile.id},profile:r.data.profile};
     await finishAuthenticatedUser();
-
-  }catch(error){
-    showAuthMessage(error.message || '로그인에 실패했습니다.');
-  }finally{
-    $('authLoginBtn').disabled=false;
-  }
+  }catch(error){ showAuthMessage(error.message||'닉네임 또는 코드가 올바르지 않습니다.'); }
+  finally{ $('authLoginBtn').disabled=false; }
 }
 
 async function signupWithNickname(){
-  const nickname = $('authNickname').value.trim();
-  const code = $('authCode').value;
-
-  if(!nickname || !code){
-    showAuthMessage('닉네임과 코드를 모두 입력해주세요.');
-    return;
-  }
-
-  if(nickname.length < 2){
-    showAuthMessage('닉네임은 2자 이상 입력해주세요.');
-    return;
-  }
-
-  if(code.length < 4){
-    showAuthMessage('코드는 4자 이상 입력해주세요.');
-    return;
-  }
-
-  // 신규 회원가입은 공통 가입 코드 260815가 있어야 신청할 수 있습니다.
-  if(code !== '260815'){
-    showAuthMessage('가입 코드가 올바르지 않습니다.');
-    return;
-  }
-
+  const nickname=$('authNickname').value.trim(), code=$('authCode').value;
+  if(!nickname||!code){ showAuthMessage('닉네임과 코드를 모두 입력해주세요.'); return; }
+  if(nickname.length<2){ showAuthMessage('닉네임은 2자 이상 입력해주세요.'); return; }
+  if(code.length<6){ showAuthMessage('코드는 6자 이상 입력해주세요.'); return; }
   $('authSignupBtn').disabled=true;
-
   try{
-    // Check nickname first. This prevents duplicate member names.
-    const existing = await db
-      .from('profiles')
-      .select('id,nickname,status')
-      .eq('nickname',nickname)
-      .maybeSingle();
-
-    if(existing.error) throw existing.error;
-
-    if(existing.data){
-      showAuthMessage('이미 사용 중인 닉네임입니다. 로그인해주세요.');
-      return;
-    }
-
-    const r = await db.auth.signUp({
-      email:authEmailFromNickname(nickname),
-      password:authPasswordFromCode(code),
-      options:{
-        data:{nickname}
-      }
-    });
-
+    const r=await db.rpc('member_signup',{p_nickname:nickname,p_code:code,p_clan_name:null});
     if(r.error) throw r.error;
-
-    if(!r.data.user){
-      showAuthMessage('가입 정보를 생성하지 못했습니다.');
-      return;
-    }
-
-    if(!r.data.session){
-      showAuthMessage('가입은 접수됐지만 이메일 확인 설정 때문에 자동 로그인이 되지 않았습니다. 관리자에게 확인을 요청해주세요.');
-      return;
-    }
-
-    session=r.data.session;
-
-    // 회원가입 직후 profiles 행은 Supabase 트리거(handle_new_user)가
-    // 이미 자동으로 만들어줍니다. 여기서 다시 INSERT하면
-    // profiles PK(id) 중복으로 'Database error saving new user'가 발생합니다.
-    // 따라서 트리거가 만든 행을 UPDATE해서 가입 상태를 pending으로 맞춥니다.
-    const profileUpdate = await db
-      .from('profiles')
-      .update({
-        nickname,
-        role:'user',
-        status:'pending'
-      })
-      .eq('id',r.data.user.id);
-
-    if(profileUpdate.error){
-      await db.auth.signOut();
-      throw profileUpdate.error;
-    }
-
-    await db.auth.signOut();
-    session=null;
-
-    $('pendingBox').classList.remove('hidden');
-    showAuthMessage('가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.','ok');
-
-  }catch(error){
-    showAuthMessage(error.message || '회원가입에 실패했습니다.');
-  }finally{
-    $('authSignupBtn').disabled=false;
-  }
+    setMemberToken(''); session=null; lockApplication(); $('pendingBox').classList.remove('hidden');
+    showAuthMessage(r.data?.message||'가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.','ok');
+  }catch(error){ showAuthMessage(error.message||'회원가입에 실패했습니다.'); }
+  finally{ $('authSignupBtn').disabled=false; }
 }
 
 async function loadPendingUsers(){
   $('pendingUsersList').innerHTML='<div class="muted">불러오는 중...</div>';
-
-  const r=await db
-    .from('profiles')
-    .select('id,nickname,clan_name,status,created_at')
-    .eq('status','pending')
-    .order('created_at',{ascending:true});
-
-  if(r.error){
-    $('pendingUsersList').innerHTML =
-      `<div class="err">${esc(r.error.message)}</div>`;
-    return;
-  }
-
+  const r=await db.rpc('admin_pending',{p_token:getMemberToken()});
+  if(r.error){ $('pendingUsersList').innerHTML=`<div class="err">${esc(r.error.message)}</div>`; return; }
   const list=r.data||[];
-
-  if(!list.length){
-    $('pendingUsersList').innerHTML =
-      '<div class="empty">현재 승인 대기 중인 가입자가 없습니다.</div>';
-    return;
-  }
-
-  $('pendingUsersList').innerHTML=list.map(user=>`
-    <div class="pendingUser">
-      <div class="pendingUserInfo">
-        <strong>${esc(user.nickname)}</strong>
-        <span>가입 신청 · ${new Date(user.created_at).toLocaleString('ko-KR')}</span>
-      </div>
-      <div class="pendingActions">
-        <button class="approveBtn" data-approve-user="${esc(user.id)}">승인</button>
-        <button class="rejectBtn" data-reject-user="${esc(user.id)}">거절</button>
-      </div>
-    </div>
-  `).join('');
+  if(!list.length){ $('pendingUsersList').innerHTML='<div class="empty">현재 승인 대기 중인 가입자가 없습니다.</div>'; return; }
+  $('pendingUsersList').innerHTML=list.map(user=>`<div class="pendingUser"><div class="pendingUserInfo"><strong>${esc(user.nickname)}</strong><span>가입 신청 · ${new Date(user.created_at).toLocaleString('ko-KR')}</span></div><div class="pendingActions"><button class="approveBtn" data-approve-user="${esc(user.id)}">승인</button><button class="rejectBtn" data-reject-user="${esc(user.id)}">거절</button></div></div>`).join('');
 }
-
 async function changeMemberStatus(id,status){
-  const r=await db
-    .from('profiles')
-    .update({status})
-    .eq('id',id);
-
-  if(r.error){
-    $('adminMsg').innerHTML=`<div class="err">${esc(r.error.message)}</div>`;
-    return;
-  }
-
-  $('adminMsg').innerHTML =
-    `<div class="ok">${status==='approved'?'승인 완료':'거절 완료'}</div>`;
-
-  await loadPendingUsers();
+  const r=await db.rpc('admin_set_status',{p_token:getMemberToken(),p_profile_id:id,p_status:status});
+  if(r.error){ $('adminMsg').innerHTML=`<div class="err">${esc(r.error.message)}</div>`; return; }
+  $('adminMsg').innerHTML=`<div class="ok">${status==='approved'?'승인 완료':'거절 완료'}</div>`; await loadPendingUsers();
 }
-
-async function openAdmin(){
-  $('adminModal').classList.remove('hidden');
-  await loadPendingUsers();
-}
-
-document.addEventListener('click',async e=>{
-  const approve=e.target.closest('[data-approve-user]');
-  if(approve){
-    await changeMemberStatus(approve.dataset.approveUser,'approved');
-    return;
-  }
-
-  const reject=e.target.closest('[data-reject-user]');
-  if(reject){
-    await changeMemberStatus(reject.dataset.rejectUser,'rejected');
-  }
-});
-
-async function saveBattle(){
-if(!session){
-$('loginCard').classList.remove('hidden');
-$('saveMsg').innerHTML='<div class="err">먼저 로그인해주세요.</div>';
-return;
-}
-const attacker=readSide('attacker','attackerName','attackerClan');
-const defender=readSide('defender','defenderName','defenderClan');
-if(!validSide(attacker)||!validSide(defender)){
-$('saveMsg').innerHTML='<div class="err">공격자와 방어자의 닉네임 · 맹 · 장수 3명을 모두 입력해주세요.</div>';
-return;
-}
-const payload={
-user_id:session.user.id,
-result:$('battleResult').value,
-opponent_name:defender.player,
-opponent_clan_name:defender.clan,
-attacker,
-defender,
-key_stats:null,
-ai_analysis:null,
-final_text:null,
-memo:$('memo').value.trim()||null
-};
-const r=await db.from('battles').insert(payload);
-if(r.error){
-$('saveMsg').innerHTML=`<div class="err">저장 실패: ${esc(r.error.message)}</div>`;
-return;
-}
-$('saveMsg').innerHTML='<div class="ok">✓ 전황 저장 완료 · 공격자와 방어자 양쪽 덱이 동시에 기록되었습니다.</div>';
-resetBattle(false);
-}
-
-function resetBattle(show=true){
-['attackerName','attackerClan','defenderName','defenderClan','memo'].forEach(id=>$(id).value='');
-$('battleResult').value='승리';
-buildHeroes();
-if(show)$('saveMsg').innerHTML='';
-}
+async function openAdmin(){ $('adminModal').classList.remove('hidden'); await loadPendingUsers(); }
+document.addEventListener('click',async e=>{ const approve=e.target.closest('[data-approve-user]'); if(approve){await changeMemberStatus(approve.dataset.approveUser,'approved');return;} const reject=e.target.closest('[data-reject-user]'); if(reject) await changeMemberStatus(reject.dataset.rejectUser,'rejected'); });
 
 $('btnRegister').onclick=()=>{
   $('registerPage').classList.remove('hidden');
@@ -3662,40 +3418,13 @@ $('authCode').addEventListener('keydown',e=>{
 
 (async()=>{
   buildHeroes();
-
-  // The application is always gated by an approved profile.
   lockApplication();
-
-  const r=await db.auth.getSession();
-  session=r.data.session;
-
-  if(session){
-    try{
-      const ok=await finishAuthenticatedUser();
-      if(!ok) session=null;
-    }catch(error){
-      await db.auth.signOut();
-      session=null;
-      showAuthMessage(error.message || '로그인 상태를 확인할 수 없습니다.');
-    }
+  try{
+    const ok=await finishAuthenticatedUser();
+    if(!ok) setAdminVisibility(false);
+  }catch(error){
+    console.error(error); setMemberToken(''); session=null; lockApplication(); showAuthMessage('로그인 상태를 확인할 수 없습니다.');
   }
-
-  db.auth.onAuthStateChange(async(_e,s)=>{
-    session=s;
-
-    if(!s){
-      setAdminVisibility(false);
-      lockApplication();
-      return;
-    }
-
-    try{
-      await finishAuthenticatedUser();
-    }catch(error){
-      console.error(error);
-      await db.auth.signOut();
-    }
-  });
 })();
 </script>
 
