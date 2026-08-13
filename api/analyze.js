@@ -1,446 +1,939 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
+
+  /*
+   * =========================================================
+   * METHOD
+   * =========================================================
+   */
+
+  if (req.method !== 'POST') {
+
     return res.status(405).json({
-      success: false,
-      error: "POST 요청만 허용됩니다."
+      error: 'POST 요청만 허용됩니다.'
     });
+
   }
 
+
+  /*
+   * =========================================================
+   * API KEY
+   * =========================================================
+   */
+
+  const API_KEY =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY;
+
+
+  if (!API_KEY) {
+
+    return res.status(500).json({
+      error:
+        'Gemini API 키가 설정되지 않았습니다.',
+      detail:
+        'Vercel Environment Variables에서 GEMINI_API_KEY를 확인해주세요.'
+    });
+
+  }
+
+
+  /*
+   * =========================================================
+   * REQUEST
+   * =========================================================
+   */
+
   try {
-    let body = req.body;
 
-    if (typeof body === "string") {
-      body = JSON.parse(body);
-    }
+    const body =
+      req.body || {};
 
-    const image = body?.image;
+
+    const image =
+      body.image;
+
+
+    const mimeType =
+      body.mimeType ||
+      'image/jpeg';
+
 
     if (!image) {
+
       return res.status(400).json({
-        success: false,
-        error: "이미지가 전달되지 않았습니다."
+        error:
+          '이미지가 전달되지 않았습니다.'
       });
+
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        error: "GEMINI_API_KEY가 없습니다."
-      });
-    }
-
-    let mimeType = "image/jpeg";
-    let base64 = image;
-
-    if (image.startsWith("data:")) {
-      const match = image.match(
-        /^data:(image\/[^;]+);base64,(.+)$/
-      );
-
-      if (!match) {
-        return res.status(400).json({
-          success: false,
-          error: "이미지 데이터 형식이 올바르지 않습니다."
-        });
-      }
-
-      mimeType = match[1];
-      base64 = match[2];
-    }
 
     /*
-    ============================================================
-    핵심:
-    이미지의 전투 결과를 구조화해서 반환한다.
-    특히 무장 카드의 승급 표시를 반드시 읽는다.
-    ============================================================
-    */
+     * =======================================================
+     * BASE64 추출
+     * =======================================================
+     *
+     * data:image/jpeg;base64,AAAA...
+     *
+     * 형태와
+     *
+     * 순수 base64
+     *
+     * 둘 다 처리
+     */
+
+    let base64 =
+      image;
+
+
+    if (
+      typeof image === 'string' &&
+      image.includes(',')
+    ) {
+
+      base64 =
+        image.split(',')[1];
+
+    }
+
+
+    if (!base64) {
+
+      return res.status(400).json({
+        error:
+          '이미지 데이터가 비어 있습니다.'
+      });
+
+    }
+
+
+    /*
+     * =========================================================
+     * GEMINI MODEL
+     * =========================================================
+     *
+     * 현재 사용 중인 모델을 유지하려면
+     * 여기 모델명만 변경하면 됩니다.
+     *
+     * 우선 저비용 Flash 계열 사용.
+     */
+
+    const MODEL =
+      process.env.GEMINI_MODEL ||
+      'gemini-2.5-flash';
+
+
+    const URL =
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+
+
+    /*
+     * =========================================================
+     * PROMPT
+     * =========================================================
+     *
+     * ★ 핵심:
+     *
+     * 긴 설명을 생성하지 않는다.
+     *
+     * 우리가 필요한 건:
+     *
+     * - 승패
+     * - 공격자
+     * - 방어자
+     * - 맹
+     * - 장수
+     * - 레벨
+     * - 승급
+     * - 병력
+     *
+     * 뿐이다.
+     */
 
     const prompt = `
-너는 삼국지 전략 게임 전투 스크린샷 전문 판독 AI다.
+이 게임 전투 결과 스크린샷을 읽고 필요한 데이터만 추출해라.
 
-첨부된 이미지는 실제 게임 전투 결과 화면이다.
+긴 설명을 절대 작성하지 마라.
+추측하지 마라.
+화면에서 확인되지 않는 값은 null로 작성해라.
 
-이미지에 실제로 보이는 정보만 사용해라.
-절대로 정보를 추측하거나 만들어내지 마라.
+반드시 JSON 하나만 출력해라.
 
-가장 중요한 것은 양쪽의 무장 3명씩을 정확하게 판독하는 것이다.
-
-각 무장 카드에서 다음 정보를 읽어라.
-
-1. 무장 이름
-2. 레벨
-3. 승급 수치
-4. 현재 병력
-5. 최대 병력
-
-==================================================
-★★★ 승급 판독 규칙 ★★★
-==================================================
-
-각 무장 카드의 이름과 레벨 사이에 있는
-빨간색/금색 승급 표시를 반드시 확인한다.
-
-그 표시의 개수를 정확하게 세어라.
-
-예를 들어 승급 표시가 1개라면:
-
-"promotion": 1
-
-2개라면:
-
-"promotion": 2
-
-3개라면:
-
-"promotion": 3
-
-처럼 숫자로 기록한다.
-
-승급 표시가 명확하게 보이지 않는 경우에는
-추측하지 말고 null을 사용한다.
-
-승급 수치를 절대로 레벨 숫자와 혼동하지 마라.
-
-==================================================
-공격측
-==================================================
-
-화면 왼쪽에 있는 전투원을 공격측으로 판독한다.
-
-공격측 플레이어 이름과 맹 이름도 읽어라.
-
-==================================================
-방어측
-==================================================
-
-화면 오른쪽에 있는 전투원을 방어측으로 판독한다.
-
-방어측 플레이어 이름과 맹 이름도 읽어라.
-
-==================================================
-병력
-==================================================
-
-각 카드 아래쪽에 표시된
-
-현재 병력 / 최대 병력
-
-을 정확하게 읽어라.
-
-예:
-
-0 / 4,763
-
-이면
-
-"troops_current": 0,
-"troops_max": 4763
-
-이다.
-
-==================================================
-전투 결과
-==================================================
-
-화면 중앙의 결과를 읽는다.
-
-승리 / 패배 / 확인 불가
-
-==================================================
-반드시 아래 JSON 형식으로만 반환
-==================================================
+형식:
 
 {
-  "battle_result": "승리",
+  "battle_result": "승리" 또는 "패배" 또는 "확인 불가",
+
   "attacker": {
-    "player": "토리아빠",
-    "clan": "수라",
+    "player": "공격자 닉네임 또는 null",
+    "clan": "공격자 맹 또는 null",
     "deck": [
       {
-        "name": "조조",
-        "level": 50,
-        "promotion": 1,
-        "troops_current": 0,
-        "troops_max": 4763
-      },
-      {
-        "name": "곽가",
-        "level": 50,
-        "promotion": 1,
-        "troops_current": 0,
-        "troops_max": 5405
-      },
-      {
-        "name": "순욱",
-        "level": 50,
-        "promotion": 1,
-        "troops_current": 0,
-        "troops_max": 4609
+        "name": "장수 이름",
+        "level": 숫자 또는 null,
+        "promotion": 숫자 또는 null,
+        "troops_current": 숫자 또는 null,
+        "troops_max": 숫자 또는 null
       }
     ]
   },
+
   "defender": {
-    "player": "상대 닉네임",
-    "clan": "상대 맹",
+    "player": "방어자 닉네임 또는 null",
+    "clan": "방어자 맹 또는 null",
     "deck": [
       {
-        "name": "제갈량",
-        "level": 50,
-        "promotion": 2,
-        "troops_current": 9936,
-        "troops_max": 10000
-      },
-      {
-        "name": "대교",
-        "level": 50,
-        "promotion": 1,
-        "troops_current": 8955,
-        "troops_max": 10000
-      },
-      {
-        "name": "황개",
-        "level": 50,
-        "promotion": 3,
-        "troops_current": 7845,
-        "troops_max": 10000
+        "name": "장수 이름",
+        "level": 숫자 또는 null,
+        "promotion": 숫자 또는 null,
+        "troops_current": 숫자 또는 null,
+        "troops_max": 숫자 또는 null
       }
     ]
   },
-  "key_stats": "화면에서 확인되는 주요 전투 수치",
-  "analysis": "전투 결과에 대한 간단한 설명",
-  "confidence": "높음"
+
+  "key_stats": {
+    "attacker_power": 숫자 또는 null,
+    "defender_power": 숫자 또는 null
+  }
 }
 
 중요:
 
-- 위 예시 숫자를 그대로 사용하지 마라.
-- 반드시 현재 첨부된 이미지를 판독해서 작성한다.
-- 승급은 이미지에 보이는 실제 표시 개수를 센다.
-- 보이지 않는 값은 null.
-- JSON 외의 설명을 붙이지 마라.
+1. 장수 이름은 화면에 보이는 그대로 읽어라.
+2. 빨간색 승급 숫자를 반드시 읽어라.
+3. 승급 숫자가 보이지 않으면 null.
+4. 레벨이 보이지 않으면 null.
+5. 병력이 보이지 않으면 null.
+6. 공격측과 방어측을 구분해라.
+7. 닉네임과 맹 이름을 구분해라.
+8. 확인되지 않은 정보를 추측하지 마라.
+9. 설명 문장을 작성하지 마라.
+10. Markdown을 사용하지 마라.
+11. 반드시 JSON만 반환해라.
 `;
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                },
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: base64
-                  }
-                }
-              ]
-            }
-          ],
-
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: "application/json"
-          }
-        })
-      }
-    );
-
-    const responseText =
-      await response.text();
-
-    let data;
-
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      return res.status(502).json({
-        success: false,
-        error: "Gemini 응답을 JSON으로 읽을 수 없습니다.",
-        detail: responseText.substring(0, 2000)
-      });
-    }
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        success: false,
-        error: "Gemini API 오류",
-        detail:
-          data?.error?.message ||
-          "알 수 없는 Gemini 오류",
-        code:
-          data?.error?.code ||
-          response.status,
-        status:
-          data?.error?.status ||
-          "UNKNOWN",
-        model: "gemini-3.6-flash"
-      });
-    }
-
-    let raw =
-      data?.candidates?.[0]?.content?.parts
-        ?.map(part => part?.text || "")
-        .join("")
-        .trim();
-
-    if (!raw) {
-      return res.status(502).json({
-        success: false,
-        error: "Gemini가 분석 결과를 반환하지 않았습니다."
-      });
-    }
 
     /*
-      혹시 Gemini가 ```json ... ``` 형태로 반환할 경우 제거
-    */
+     * =========================================================
+     * GEMINI REQUEST
+     * =========================================================
+     */
 
-    raw = raw
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
+    const geminiResponse =
+      await fetch(
+        URL,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body: JSON.stringify({
+
+            contents: [
+
+              {
+                role: 'user',
+
+                parts: [
+
+                  {
+                    text:
+                      prompt
+                  },
+
+                  {
+                    inline_data: {
+
+                      mime_type:
+                        mimeType,
+
+                      data:
+                        base64
+
+                    }
+
+                  }
+
+                ]
+
+              }
+
+            ],
+
+
+            /*
+             * 출력 형식을 JSON으로 강제
+             */
+
+            generationConfig: {
+
+              temperature:
+                0,
+
+              maxOutputTokens:
+                1500,
+
+              responseMimeType:
+                'application/json'
+
+            }
+
+          })
+
+        }
+      );
+
+
+    /*
+     * =========================================================
+     * GEMINI ERROR
+     * =========================================================
+     */
+
+    const raw =
+      await geminiResponse.text();
+
+
+    if (!geminiResponse.ok) {
+
+      let errorData = null;
+
+
+      try {
+
+        errorData =
+          JSON.parse(raw);
+
+      } catch (_) {
+
+        errorData = {
+          raw
+        };
+
+      }
+
+
+      console.error(
+        'GEMINI ERROR:',
+        geminiResponse.status,
+        errorData
+      );
+
+
+      return res.status(
+        geminiResponse.status
+      ).json({
+
+        error:
+          errorData?.error?.message ||
+          errorData?.message ||
+          'Gemini API 요청 실패',
+
+        detail:
+          errorData?.error?.status ||
+          errorData?.error?.details ||
+          errorData?.detail ||
+          null,
+
+        raw:
+          raw.substring(
+            0,
+            3000
+          )
+
+      });
+
+    }
+
+
+    /*
+     * =========================================================
+     * PARSE GEMINI RESPONSE
+     * =========================================================
+     */
+
+    let geminiData;
+
+
+    try {
+
+      geminiData =
+        JSON.parse(raw);
+
+    } catch (error) {
+
+      return res.status(500).json({
+
+        error:
+          'Gemini 응답을 읽을 수 없습니다.',
+
+        detail:
+          raw.substring(
+            0,
+            3000
+          )
+
+      });
+
+    }
+
+
+    /*
+     * =========================================================
+     * TEXT 추출
+     * =========================================================
+     */
+
+    const text =
+      geminiData
+        ?.candidates?.[0]
+        ?.content?.parts
+        ?.map(
+          part =>
+            part.text || ''
+        )
+        .join('')
+        .trim();
+
+
+    if (!text) {
+
+      return res.status(500).json({
+
+        error:
+          'Gemini가 분석 결과를 반환하지 않았습니다.',
+
+        raw:
+          JSON.stringify(
+            geminiData
+          ).substring(
+            0,
+            3000
+          )
+
+      });
+
+    }
+
+
+    /*
+     * =========================================================
+     * JSON CLEAN
+     * =========================================================
+     *
+     * 혹시 Gemini가 ```json ... ```
+     * 형태로 반환해도 제거
+     */
+
+    let cleanText =
+      text
+        .replace(
+          /^```json\s*/i,
+          ''
+        )
+        .replace(
+          /^```\s*/i,
+          ''
+        )
+        .replace(
+          /\s*```$/i,
+          ''
+        )
+        .trim();
+
+
+    /*
+     * =========================================================
+     * STRUCTURED JSON
+     * =========================================================
+     */
 
     let structured;
 
+
     try {
+
       structured =
-        JSON.parse(raw);
-    } catch {
-      return res.status(502).json({
-        success: false,
-        error: "Gemini 결과 JSON 파싱 실패",
-        detail: raw.substring(0, 3000)
-      });
-    }
+        JSON.parse(
+          cleanText
+        );
 
-    /*
-    ============================================================
-    사람이 보는 기존 전투 보고서도 함께 생성
-    ============================================================
-    */
+    } catch (error) {
 
-    const a =
-      structured.attacker || {};
+      /*
+       * 혹시 JSON 앞뒤에 불필요한 문자가 붙은 경우
+       * 첫 { 부터 마지막 }까지만 사용
+       */
 
-    const d =
-      structured.defender || {};
+      const first =
+        cleanText.indexOf('{');
 
-    function deckText(side) {
 
-      const deck =
-        Array.isArray(side.deck)
-          ? side.deck
-          : [];
+      const last =
+        cleanText.lastIndexOf('}');
 
-      if (!deck.length) {
-        return "확인된 무장 없음";
+
+      if(
+        first !== -1 &&
+        last !== -1 &&
+        last > first
+      ){
+
+        try {
+
+          structured =
+            JSON.parse(
+              cleanText.substring(
+                first,
+                last + 1
+              )
+            );
+
+        } catch (_) {
+
+          structured =
+            null;
+
+        }
+
       }
 
-      return deck.map((hero, i) => {
+    }
 
-        return [
-          `${i + 1}.`,
-          `이름: ${hero.name ?? "확인 불가"}`,
-          `레벨: ${hero.level ?? "확인 불가"}`,
-          `승급: ${
-            hero.promotion == null
-              ? "확인 불가"
-              : hero.promotion
-          }`,
-          `병력: ${
-            hero.troops_current == null
-              ? "확인 불가"
-              : hero.troops_current
-          } / ${
-            hero.troops_max == null
-              ? "확인 불가"
-              : hero.troops_max
-          }`
-        ].join("\n");
 
-      }).join("\n\n");
+    /*
+     * =========================================================
+     * JSON VALIDATION
+     * =========================================================
+     */
+
+    if (!structured) {
+
+      return res.status(500).json({
+
+        error:
+          'AI가 올바른 JSON을 반환하지 않았습니다.',
+
+        detail:
+          cleanText.substring(
+            0,
+            3000
+          )
+
+      });
 
     }
 
 
-    const readable = `
-[전투 결과]
-${structured.battle_result || "확인 불가"}
+    /*
+     * =========================================================
+     * NORMALIZE
+     * =========================================================
+     *
+     * DB에 저장하기 전에 구조를 일정하게 맞춘다.
+     */
 
-[공격측]
-플레이어: ${a.player || "확인 불가"}
-맹: ${a.clan || "확인 불가"}
+    structured =
+      normalizeResult(
+        structured
+      );
 
-${deckText(a)}
 
-[방어측]
-플레이어: ${d.player || "확인 불가"}
-맹: ${d.clan || "확인 불가"}
+    /*
+     * =========================================================
+     * SHORT RESULT TEXT
+     * =========================================================
+     *
+     * 기존 index.html이 resultText도 필요하기 때문에
+     * 긴 AI 설명 대신 짧은 요약만 생성한다.
+     */
 
-${deckText(d)}
+    const resultText =
+      makeShortResult(
+        structured
+      );
 
-[주요 전투 수치]
-${structured.key_stats || "확인 불가"}
 
-[전투 분석]
-${structured.analysis || "확인 불가"}
-
-[판독 신뢰도]
-${structured.confidence || "확인 불가"}
-`.trim();
-
+    /*
+     * =========================================================
+     * FINAL RESPONSE
+     * =========================================================
+     */
 
     return res.status(200).json({
 
-      success: true,
+      result:
+        resultText,
 
-      text: readable,
-
-      result: readable,
-
-      structured,
-
-      attacker:
-        structured.attacker || null,
-
-      defender:
-        structured.defender || null,
-
-      battle_result:
-        structured.battle_result || null,
-
-      model:
-        "gemini-3.6-flash"
+      structured:
+        structured
 
     });
+
 
   } catch (error) {
 
     console.error(
-      "ANALYZE ERROR:",
+      'ANALYZE SERVER ERROR:',
       error
     );
 
+
     return res.status(500).json({
-      success: false,
-      error: "분석 서버 오류",
+
+      error:
+        '분석 서버 오류',
+
       detail:
         error?.message ||
         String(error)
+
     });
 
   }
+
+}
+
+
+/*
+ * ===========================================================
+ * NORMALIZE RESULT
+ * ===========================================================
+ */
+
+function normalizeResult(
+  data
+){
+
+  const result = {
+
+    battle_result:
+      normalizeBattleResult(
+        data?.battle_result
+      ),
+
+    attacker:
+      normalizeSide(
+        data?.attacker
+      ),
+
+    defender:
+      normalizeSide(
+        data?.defender
+      ),
+
+    key_stats: {
+
+      attacker_power:
+        toNumberOrNull(
+          data?.key_stats
+            ?.attacker_power
+        ),
+
+      defender_power:
+        toNumberOrNull(
+          data?.key_stats
+            ?.defender_power
+        )
+
+    }
+
+  };
+
+
+  return result;
+
+}
+
+
+/*
+ * ===========================================================
+ * NORMALIZE SIDE
+ * ===========================================================
+ */
+
+function normalizeSide(
+  side
+){
+
+  if(!side){
+
+    return null;
+
+  }
+
+
+  const deck =
+    Array.isArray(
+      side.deck
+    )
+      ? side.deck
+      : [];
+
+
+  return {
+
+    player:
+      side.player
+        ? String(
+            side.player
+          ).trim()
+        : null,
+
+    clan:
+      side.clan
+        ? String(
+            side.clan
+          ).trim()
+        : null,
+
+    deck:
+      deck
+        .slice(
+          0,
+          5
+        )
+        .map(
+          hero => ({
+
+            name:
+              hero?.name
+                ? String(
+                    hero.name
+                  ).trim()
+                : null,
+
+            level:
+              toNumberOrNull(
+                hero?.level
+              ),
+
+            promotion:
+              toNumberOrNull(
+                hero?.promotion
+              ),
+
+            troops_current:
+              toNumberOrNull(
+                hero?.troops_current
+              ),
+
+            troops_max:
+              toNumberOrNull(
+                hero?.troops_max
+              )
+
+          })
+        )
+
+  };
+
+}
+
+
+/*
+ * ===========================================================
+ * BATTLE RESULT
+ * ===========================================================
+ */
+
+function normalizeBattleResult(
+  value
+){
+
+  const text =
+    String(
+      value || ''
+    )
+    .trim();
+
+
+  if(
+    text.includes('승')
+  ){
+
+    return '승리';
+
+  }
+
+
+  if(
+    text.includes('패')
+  ){
+
+    return '패배';
+
+  }
+
+
+  return '확인 불가';
+
+}
+
+
+/*
+ * ===========================================================
+ * NUMBER
+ * ===========================================================
+ */
+
+function toNumberOrNull(
+  value
+){
+
+  if(
+    value === null ||
+    value === undefined ||
+    value === ''
+  ){
+
+    return null;
+
+  }
+
+
+  if(
+    typeof value === 'number'
+  ){
+
+    return Number.isFinite(
+      value
+    )
+      ? value
+      : null;
+
+  }
+
+
+  const cleaned =
+    String(value)
+      .replace(
+        /,/g,
+        ''
+      )
+      .replace(
+        /[^0-9.-]/g,
+        ''
+      );
+
+
+  if(!cleaned){
+
+    return null;
+
+  }
+
+
+  const number =
+    Number(
+      cleaned
+    );
+
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : null;
+
+}
+
+
+/*
+ * ===========================================================
+ * SHORT RESULT
+ * ===========================================================
+ *
+ * 긴 설명을 만들지 않는다.
+ */
+
+function makeShortResult(
+  data
+){
+
+  const lines = [];
+
+
+  lines.push(
+    `전투 결과: ${data.battle_result}`
+  );
+
+
+  if(
+    data.attacker
+  ){
+
+    lines.push(
+      `공격: ${data.attacker.player || '확인 불가'}` +
+      (
+        data.attacker.clan
+          ? ` / ${data.attacker.clan}`
+          : ''
+      )
+    );
+
+
+    if(
+      data.attacker.deck.length
+    ){
+
+      lines.push(
+        '공격 덱: ' +
+        data.attacker.deck
+          .map(
+            hero =>
+              `${hero.name || '?'} ` +
+              `Lv.${hero.level ?? '?'} ` +
+              `승급 ${hero.promotion ?? '?'}`
+          )
+          .join(' · ')
+      );
+
+    }
+
+  }
+
+
+  if(
+    data.defender
+  ){
+
+    lines.push(
+      `방어: ${data.defender.player || '확인 불가'}` +
+      (
+        data.defender.clan
+          ? ` / ${data.defender.clan}`
+          : ''
+      )
+    );
+
+
+    if(
+      data.defender.deck.length
+    ){
+
+      lines.push(
+        '방어 덱: ' +
+        data.defender.deck
+          .map(
+            hero =>
+              `${hero.name || '?'} ` +
+              `Lv.${hero.level ?? '?'} ` +
+              `승급 ${hero.promotion ?? '?'}`
+          )
+          .join(' · ')
+      );
+
+    }
+
+  }
+
+
+  return lines.join('\n');
+
 }
