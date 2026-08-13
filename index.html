@@ -659,6 +659,56 @@ textarea{
 
 }
 
+
+.promotionSelect{
+
+  width:100%;
+
+  margin-top:7px;
+
+  padding:7px 6px;
+
+  border-radius:9px;
+
+  border:1px solid #4a3a20;
+
+  background:#0a0e12;
+
+  color:#f0d48a;
+
+  font-size:12px;
+
+  font-weight:900;
+
+}
+
+.promotionSelect:focus{
+
+  border-color:#d5ad57;
+
+  outline:none;
+
+}
+
+.promotionSelect.invalid{
+
+  border-color:#d85b5b;
+
+  box-shadow:0 0 0 1px #d85b5b;
+
+}
+
+.promotionHint{
+
+  margin-top:5px;
+
+  color:#9b8b68;
+
+  font-size:10px;
+
+}
+
+
 .troops{
 
   margin-top:6px;
@@ -2852,8 +2902,16 @@ async function(){
 
 function heroHTML(
   hero,
-  index
+  index,
+  side
 ){
+
+  const promotionValue =
+    Number.isInteger(
+      Number(hero?.promotion)
+    )
+      ? Number(hero.promotion)
+      : '';
 
   return `
 
@@ -2888,15 +2946,31 @@ function heroHTML(
       </div>
 
 
-      <div class="promotion">
+      <select
+        class="promotionSelect"
+        data-side="${esc(side || '')}"
+        data-index="${index}"
+        aria-label="${esc((hero?.name || '영웅') + ' 승급 선택')}"
+      >
 
-        🔴 승급
+        <option value="">승급 선택</option>
 
-        ${esc(
-          hero?.promotion ??
-          '?'
-        )}
+        ${Array.from(
+          {length:11},
+          (_, promotion) => `
+            <option
+              value="${promotion}"
+              ${String(promotionValue) === String(promotion) ? 'selected' : ''}
+            >
+              🔴 승급 ${promotion}
+            </option>
+          `
+        ).join('')}
 
+      </select>
+
+      <div class="promotionHint">
+        직접 선택해주세요
       </div>
 
 
@@ -2935,7 +3009,6 @@ function heroHTML(
   `;
 
 }
-
 
 /* =========================================================
    DECK PANEL
@@ -3031,10 +3104,17 @@ function deckPanel(
 
           deck
 
-            .slice(0,5)
+            .slice(0,6)
 
             .map(
-              heroHTML
+              (hero,index) =>
+                heroHTML(
+                  hero,
+                  index,
+                  className === 'attack'
+                    ? 'attacker'
+                    : 'defender'
+                )
             )
 
             .join('')
@@ -3078,9 +3158,17 @@ function renderDeckPreview(){
 
     </div>
 
+    <div class="notice">
+
+      AI는 영웅 이름과 레벨만 판독합니다.
+      <br>
+      🔴 승급은 각 영웅마다 직접 선택해주세요.
+      저장하려면 확인된 영웅의 승급을 모두 선택해야 합니다.
+
+    </div>
+
 
     ${
-
       deckPanel(
 
         '⚔ 공격측 덱',
@@ -3090,12 +3178,10 @@ function renderDeckPreview(){
         'attack'
 
       )
-
     }
 
 
     ${
-
       structured.attacker &&
       structured.defender
 
@@ -3111,7 +3197,6 @@ function renderDeckPreview(){
 
 
     ${
-
       deckPanel(
 
         '🛡 방어측 덱',
@@ -3121,10 +3206,111 @@ function renderDeckPreview(){
         'defense'
 
       )
-
     }
 
   `;
+
+}
+
+function applyManualPromotions(){
+
+  const result = {
+    attacker: structured?.attacker
+      ? {
+          ...structured.attacker,
+          deck: Array.isArray(structured.attacker.deck)
+            ? structured.attacker.deck
+                .slice(0,6)
+                .map((hero,index) => ({
+                  ...hero,
+                  promotion: null
+                }))
+            : []
+        }
+      : null,
+
+    defender: structured?.defender
+      ? {
+          ...structured.defender,
+          deck: Array.isArray(structured.defender.deck)
+            ? structured.defender.deck
+                .slice(0,6)
+                .map((hero,index) => ({
+                  ...hero,
+                  promotion: null
+                }))
+            : []
+        }
+      : null
+  };
+
+  const selects =
+    document.querySelectorAll(
+      '.promotionSelect'
+    );
+
+  let missing = 0;
+
+  selects.forEach(select => {
+
+    const side =
+      select.dataset.side;
+
+    const index =
+      Number(
+        select.dataset.index
+      );
+
+    const value =
+      select.value;
+
+    select.classList.toggle(
+      'invalid',
+      value === ''
+    );
+
+    if(value === ''){
+      missing++;
+      return;
+    }
+
+    if(
+      side === 'attacker' &&
+      result.attacker?.deck[index]
+    ){
+
+      result.attacker.deck[index].promotion =
+        Number(value);
+
+    }
+
+    if(
+      side === 'defender' &&
+      result.defender?.deck[index]
+    ){
+
+      result.defender.deck[index].promotion =
+        Number(value);
+
+    }
+
+  });
+
+  if(missing > 0){
+
+    return {
+      ok:false,
+      missing,
+      data:null
+    };
+
+  }
+
+  return {
+    ok:true,
+    missing:0,
+    data:result
+  };
 
 }
 
@@ -3165,15 +3351,31 @@ async function(){
   }
 
 
-  const attacker =
+  const manual =
+    applyManualPromotions();
 
-    structured?.attacker ||
+
+  if(!manual.ok){
+
+    alert(
+      '승급을 모두 선택해주세요.\n\n' +
+      '아직 선택하지 않은 영웅: ' +
+      manual.missing +
+      '명'
+    );
+
+    return;
+
+  }
+
+
+  const attacker =
+    manual.data?.attacker ||
     null;
 
 
   const defender =
-
-    structured?.defender ||
+    manual.data?.defender ||
     null;
 
 
@@ -3290,7 +3492,6 @@ async function(){
 
 };
 
-
 /* =========================================================
    DECK SIGNATURE
 ========================================================= */
@@ -3318,7 +3519,7 @@ function deckSignature(
 
     data.deck
 
-      .slice(0,5)
+      .slice(0,6)
 
       .map(
 
@@ -3591,7 +3792,7 @@ function savedDeckHTML(
 
           deck
 
-            .slice(0,5)
+            .slice(0,6)
 
             .map(
 
@@ -3630,9 +3831,7 @@ function savedDeckHTML(
 
                   <div class="promotion">
 
-                    🔴 승급
-
-                    ${esc(
+                    🔴 승급 ${esc(
                       hero?.promotion ??
                       '?'
                     )}
