@@ -2,8 +2,7 @@
 // 수라 전투부대
 // api/analyze.js
 //
-// Gemini 전투결과 이미지 분석
-// 공격자 + 방어자 데이터를 동시에 추출
+// 전투 스크린샷 → Gemini → 구조화된 전투 데이터
 // ============================================================
 
 export default async function handler(req, res) {
@@ -29,12 +28,12 @@ export default async function handler(req, res) {
     return sendError(
       res,
       405,
-      "POST 요청만 사용할 수 있습니다."
+      "POST 요청만 허용됩니다."
     );
   }
 
   // ----------------------------------------------------------
-  // GEMINI API KEY
+  // API KEY
   // ----------------------------------------------------------
 
   const API_KEY =
@@ -50,7 +49,7 @@ export default async function handler(req, res) {
   }
 
   // ----------------------------------------------------------
-  // REQUEST BODY
+  // BODY
   // ----------------------------------------------------------
 
   let body = req.body;
@@ -58,7 +57,7 @@ export default async function handler(req, res) {
   if (typeof body === "string") {
     try {
       body = JSON.parse(body);
-    } catch (error) {
+    } catch {
       return sendError(
         res,
         400,
@@ -79,7 +78,7 @@ export default async function handler(req, res) {
   // IMAGE
   // ----------------------------------------------------------
 
-  let imageInput =
+  const imageInput =
     body.image ||
     body.imageBase64 ||
     body.base64 ||
@@ -98,23 +97,25 @@ export default async function handler(req, res) {
     body.mime_type ||
     "image/jpeg";
 
-  let base64Data = String(imageInput);
+  let base64Data =
+    String(imageInput);
 
-  // data:image/jpeg;base64,XXXX
+  // data:image/jpeg;base64,...
   if (base64Data.startsWith("data:")) {
-    const match = base64Data.match(
-      /^data:([^;]+);base64,(.*)$/s
-    );
+    const match =
+      base64Data.match(
+        /^data:([^;]+);base64,(.*)$/s
+      );
 
     if (!match) {
       return sendError(
         res,
         400,
-        "이미지 data URL 형식이 올바르지 않습니다."
+        "이미지 데이터 형식이 올바르지 않습니다."
       );
     }
 
-    mimeType = match[1] || mimeType;
+    mimeType = match[1];
     base64Data = match[2];
   }
 
@@ -126,7 +127,7 @@ export default async function handler(req, res) {
     return sendError(
       res,
       400,
-      "이미지 데이터가 비어 있습니다."
+      "이미지 데이터가 너무 작습니다."
     );
   }
 
@@ -141,16 +142,14 @@ export default async function handler(req, res) {
   const endpoint =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       MODEL
-    )}:generateContent`;
+    )}:generateContent?key=${encodeURIComponent(
+      API_KEY
+    )}`;
 
   // ----------------------------------------------------------
   // JSON SCHEMA
   //
-  // 중요:
-  // nullable을 사용하지 않는다.
-  //
-  // promotion = -1
-  // 이면 판독 불가.
+  // 아주 단순하게 유지한다.
   // ----------------------------------------------------------
 
   const BATTLE_SCHEMA = {
@@ -158,9 +157,7 @@ export default async function handler(req, res) {
 
     properties: {
       battle_result: {
-        type: "string",
-        description:
-          "이미지에 표시된 전투 결과. 승리, 패배, 무승부 중 하나."
+        type: "string"
       },
 
       attacker: {
@@ -168,66 +165,46 @@ export default async function handler(req, res) {
 
         properties: {
           player: {
-            type: "string",
-            description:
-              "화면 왼쪽 공격자의 게임 닉네임. 이미지에 보이는 그대로."
+            type: "string"
           },
 
           clan: {
-            type: "string",
-            description:
-              "화면 왼쪽 공격자의 맹 이름. 이미지에 보이는 그대로."
+            type: "string"
           },
 
           troops_current: {
-            type: "integer",
-            description:
-              "공격자의 전체 현재 병력. 읽을 수 없으면 -1."
+            type: "integer"
           },
 
           troops_max: {
-            type: "integer",
-            description:
-              "공격자의 전체 최대 병력. 읽을 수 없으면 -1."
+            type: "integer"
           },
 
           deck: {
             type: "array",
-            minItems: 3,
-            maxItems: 3,
 
             items: {
               type: "object",
 
               properties: {
                 name: {
-                  type: "string",
-                  description:
-                    "장수 카드에 표시된 장수 이름."
+                  type: "string"
                 },
 
                 level: {
-                  type: "integer",
-                  description:
-                    "장수 카드에 표시된 레벨. 읽을 수 없으면 -1."
+                  type: "integer"
                 },
 
                 promotion: {
-                  type: "integer",
-                  description:
-                    "장수 카드에 표시된 빨간색 승급 숫자. 반드시 이미지의 빨간 승급 표시를 직접 판독한다. 추측 금지. 읽을 수 없으면 -1."
+                  type: "integer"
                 },
 
                 troops_current: {
-                  type: "integer",
-                  description:
-                    "해당 장수의 현재 병력. 읽을 수 없으면 -1."
+                  type: "integer"
                 },
 
                 troops_max: {
-                  type: "integer",
-                  description:
-                    "해당 장수의 최대 병력. 읽을 수 없으면 -1."
+                  type: "integer"
                 }
               },
 
@@ -237,9 +214,7 @@ export default async function handler(req, res) {
                 "promotion",
                 "troops_current",
                 "troops_max"
-              ],
-
-              additionalProperties: false
+              ]
             }
           }
         },
@@ -250,9 +225,7 @@ export default async function handler(req, res) {
           "troops_current",
           "troops_max",
           "deck"
-        ],
-
-        additionalProperties: false
+        ]
       },
 
       defender: {
@@ -260,66 +233,46 @@ export default async function handler(req, res) {
 
         properties: {
           player: {
-            type: "string",
-            description:
-              "화면 오른쪽 방어자의 게임 닉네임. 이미지에 보이는 그대로."
+            type: "string"
           },
 
           clan: {
-            type: "string",
-            description:
-              "화면 오른쪽 방어자의 맹 이름. 이미지에 보이는 그대로."
+            type: "string"
           },
 
           troops_current: {
-            type: "integer",
-            description:
-              "방어자의 전체 현재 병력. 읽을 수 없으면 -1."
+            type: "integer"
           },
 
           troops_max: {
-            type: "integer",
-            description:
-              "방어자의 전체 최대 병력. 읽을 수 없으면 -1."
+            type: "integer"
           },
 
           deck: {
             type: "array",
-            minItems: 3,
-            maxItems: 3,
 
             items: {
               type: "object",
 
               properties: {
                 name: {
-                  type: "string",
-                  description:
-                    "장수 카드에 표시된 장수 이름."
+                  type: "string"
                 },
 
                 level: {
-                  type: "integer",
-                  description:
-                    "장수 카드에 표시된 레벨. 읽을 수 없으면 -1."
+                  type: "integer"
                 },
 
                 promotion: {
-                  type: "integer",
-                  description:
-                    "장수 카드에 표시된 빨간색 승급 숫자. 반드시 이미지의 빨간 승급 표시를 직접 판독한다. 추측 금지. 읽을 수 없으면 -1."
+                  type: "integer"
                 },
 
                 troops_current: {
-                  type: "integer",
-                  description:
-                    "해당 장수의 현재 병력. 읽을 수 없으면 -1."
+                  type: "integer"
                 },
 
                 troops_max: {
-                  type: "integer",
-                  description:
-                    "해당 장수의 최대 병력. 읽을 수 없으면 -1."
+                  type: "integer"
                 }
               },
 
@@ -329,9 +282,7 @@ export default async function handler(req, res) {
                 "promotion",
                 "troops_current",
                 "troops_max"
-              ],
-
-              additionalProperties: false
+              ]
             }
           }
         },
@@ -342,9 +293,7 @@ export default async function handler(req, res) {
           "troops_current",
           "troops_max",
           "deck"
-        ],
-
-        additionalProperties: false
+        ]
       }
     },
 
@@ -352,167 +301,75 @@ export default async function handler(req, res) {
       "battle_result",
       "attacker",
       "defender"
-    ],
-
-    additionalProperties: false
+    ]
   };
 
   // ----------------------------------------------------------
   // PROMPT
+  //
+  // 최대한 짧게 한다.
   // ----------------------------------------------------------
 
   const prompt = `
 이 이미지는 삼국지 전략 게임의 전투 결과 화면이다.
 
-이미지를 OCR처럼 매우 정확하게 읽어서 데이터를 추출한다.
+이미지에서 실제로 보이는 값만 판독한다.
+추측하지 않는다.
 
-가장 중요한 것은 공격자와 방어자의 데이터를 모두 정확하게
-분리하는 것이다.
+[공격자]
+화면 왼쪽의 닉네임, 맹, 전체 병력,
+장수 3명을 읽는다.
 
-==================================================
-공격자 / 방어자
-==================================================
+[방어자]
+화면 오른쪽의 닉네임, 맹, 전체 병력,
+장수 3명을 읽는다.
 
-화면 왼쪽:
+각 장수는 다음을 읽는다.
 
-공격자
+- name: 장수 이름
+- level: 레벨
+- promotion: 카드에 실제로 보이는 빨간색 승급 숫자
+- troops_current: 현재 병력
+- troops_max: 최대 병력
 
-화면 오른쪽:
+승급 숫자가 매우 중요하다.
 
-방어자
+레벨을 보고 승급을 추측하지 않는다.
 
-절대로 두 사람을 뒤바꾸지 않는다.
+빨간 승급 표시가 실제로 1개면 1,
+2개면 2,
+3개면 3이다.
 
-공격자의 닉네임은 화면 왼쪽 위의 닉네임을 읽는다.
+읽을 수 없으면 promotion은 -1이다.
 
-방어자의 닉네임은 화면 오른쪽 위의 닉네임을 읽는다.
+닉네임과 맹 이름은 이미지에 보이는 그대로 입력한다.
 
-맹 이름도 각각 따로 읽는다.
+공격자와 방어자를 절대 뒤바꾸지 않는다.
 
-예:
+공격자와 방어자 모두 반드시 반환한다.
 
-공격자:
-토리아빠
-별빛
+장수는 각각 정확히 3명이다.
 
-방어자:
-멸망
-낙화
+전체 병력 예:
+0 / 14,777 → 0, 14777
+26,736 / 30,000 → 26736, 30000
 
-라면 반드시 그대로 반환한다.
-
-==================================================
-장수 덱
-==================================================
-
-공격자 3명과 방어자 3명을 모두 읽는다.
-
-각 장수마다:
-
-1. 이름
-2. 레벨
-3. 승급
-4. 현재 병력
-5. 최대 병력
-
-을 읽는다.
-
-==================================================
-승급은 매우 중요
-==================================================
-
-장수 카드에서 빨간색으로 표시되는 승급 숫자가 있다.
-
-그 숫자를 직접 이미지에서 읽는다.
-
-예:
-
-빨간 승급 표시가 1개면:
-
-promotion = 1
-
-빨간 승급 표시가 2개면:
-
-promotion = 2
-
-빨간 승급 표시가 3개면:
-
-promotion = 3
-
-절대로 레벨을 이용해서 승급을 추측하지 않는다.
-
-레벨 50이라고 승급 2라고 판단하면 안 된다.
-
-승급은 반드시 이미지의 빨간 표시를 직접 판독한다.
-
-판독할 수 없는 경우:
-
-promotion = -1
-
-==================================================
-병력
-==================================================
-
-예:
-
-0 / 14,777
-
-이면:
-
-troops_current = 0
-troops_max = 14777
-
-예:
-
-26,736 / 30,000
-
-이면:
-
-troops_current = 26736
-troops_max = 30000
-
-쉼표는 제거한다.
-
-==================================================
-중요
-==================================================
-
-이미지에 실제로 보이지 않는 값은 절대로 추측하지 않는다.
-
-읽을 수 없는 숫자는 -1.
-
-읽을 수 없는 이름은 빈 문자열.
-
-하지만 공격자와 방어자 모두 반드시 반환한다.
-
-공격자 덱 3명 모두 반환한다.
-
-방어자 덱 3명 모두 반환한다.
-
-설명하지 않는다.
-
-JSON만 반환한다.
+오직 지정된 JSON만 반환한다.
 `;
 
   // ----------------------------------------------------------
-  // REQUEST BODY
+  // GEMINI REQUEST
   //
-  // 여기 부분이 이번에 가장 중요하다.
+  // 중요:
+  // responseFormat 사용하지 않는다.
   //
-  // generateContent의 공식 Structured Output 형식:
-  //
-  // generationConfig
-  //   responseFormat
-  //     text
-  //       mimeType
-  //       schema
-  //
+  // generateContent의 generationConfig에서
+  // responseMimeType / responseSchema 사용.
   // ----------------------------------------------------------
 
   const requestBody = {
     contents: [
       {
-        role: "user",
         parts: [
           {
             text: prompt
@@ -528,19 +385,16 @@ JSON만 반환한다.
     ],
 
     generationConfig: {
-      responseFormat: {
-        text: {
-          mimeType: "application/json",
-          schema: BATTLE_SCHEMA
-        }
-      },
-
-      maxOutputTokens: 1800
+      responseMimeType: "application/json",
+      responseSchema: BATTLE_SCHEMA,
+      maxOutputTokens: 1600
     }
   };
 
   // ----------------------------------------------------------
-  // GEMINI 호출
+  // GEMINI REQUEST
+  //
+  // 503 / 429 등은 최대 3회 재시도
   // ----------------------------------------------------------
 
   const MAX_RETRIES = 3;
@@ -554,23 +408,26 @@ JSON만 반환한다.
     attempt++
   ) {
     try {
-      response = await fetch(endpoint, {
-        method: "POST",
+      response = await fetch(
+        endpoint,
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": API_KEY
-        },
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-        body: JSON.stringify(requestBody)
-      });
+          body: JSON.stringify(
+            requestBody
+          )
+        }
+      );
 
       // 성공
       if (response.ok) {
         break;
       }
 
-      // 재시도 가능한 오류
       const retryable =
         response.status === 429 ||
         response.status === 500 ||
@@ -578,6 +435,7 @@ JSON만 반환한다.
         response.status === 503 ||
         response.status === 504;
 
+      // 재시도 불가능
       if (
         !retryable ||
         attempt >= MAX_RETRIES
@@ -585,15 +443,18 @@ JSON만 반환한다.
         break;
       }
 
-      // 응답 소비
+      // 응답 버리기
       try {
         await response.text();
       } catch {}
 
-      // 1초 → 2초 → 4초
       const delay =
         Math.min(
-          1000 * Math.pow(2, attempt),
+          1000 *
+            Math.pow(
+              2,
+              attempt
+            ),
           8000
         );
 
@@ -604,21 +465,26 @@ JSON만 반환한다.
         error?.message ||
         String(error);
 
-      if (attempt >= MAX_RETRIES) {
+      if (
+        attempt >= MAX_RETRIES
+      ) {
         return sendError(
           res,
           500,
-          "Gemini API 연결에 실패했습니다.",
+          "Gemini API 연결 실패",
           {
-            detail: lastError,
-            model: MODEL
+            detail: lastError
           }
         );
       }
 
       const delay =
         Math.min(
-          1000 * Math.pow(2, attempt),
+          1000 *
+            Math.pow(
+              2,
+              attempt
+            ),
           8000
         );
 
@@ -630,7 +496,10 @@ JSON만 반환한다.
   // HTTP ERROR
   // ----------------------------------------------------------
 
-  if (!response || !response.ok) {
+  if (
+    !response ||
+    !response.ok
+  ) {
     let rawError = "";
 
     try {
@@ -644,56 +513,70 @@ JSON만 반환한다.
       errorData =
         JSON.parse(rawError);
     } catch {
-      errorData = {
-        message: rawError
-      };
+      errorData = null;
     }
 
-    const message =
+    const googleMessage =
       errorData?.error?.message ||
-      errorData?.message ||
       rawError ||
       lastError ||
       "알 수 없는 Gemini API 오류";
 
-    let userMessage = message;
+    let message =
+      googleMessage;
 
-    if (response?.status === 503) {
-      userMessage =
-        "Gemini 서버가 일시적으로 혼잡합니다. " +
-        "자동 재시도 후에도 실패했습니다.";
+    if (
+      response?.status === 503
+    ) {
+      message =
+        "Gemini 서버가 일시적으로 혼잡합니다. 자동 재시도 후에도 실패했습니다.";
     }
 
-    if (response?.status === 429) {
-      userMessage =
+    if (
+      response?.status === 429
+    ) {
+      message =
         "Gemini API 사용량 또는 요청 한도에 도달했습니다.";
     }
 
-    if (response?.status === 400) {
-      userMessage =
-        "Gemini 요청 형식이 잘못되었습니다.";
+    if (
+      response?.status === 400
+    ) {
+      message =
+        googleMessage;
     }
 
-    if (response?.status === 404) {
-      userMessage =
-        "Gemini 모델을 찾을 수 없습니다.";
+    if (
+      response?.status === 404
+    ) {
+      message =
+        `Gemini 모델을 찾을 수 없습니다: ${MODEL}`;
     }
 
-    return res.status(
-      response?.status || 500
-    ).json({
-      ok: false,
-      error: "Gemini API 요청 실패",
-      http_status:
-        response?.status || 500,
-      model: MODEL,
-      message: userMessage,
-      detail: message
-    });
+    return res
+      .status(
+        response?.status || 500
+      )
+      .json({
+        ok: false,
+
+        error:
+          "Gemini API 요청 실패",
+
+        http_status:
+          response?.status || 500,
+
+        model: MODEL,
+
+        message,
+
+        detail:
+          googleMessage
+      });
   }
 
   // ----------------------------------------------------------
-  // GEMINI RESPONSE
+  // RESPONSE
   // ----------------------------------------------------------
 
   let rawText;
@@ -723,13 +606,17 @@ JSON만 반환한다.
     return sendError(
       res,
       500,
-      "Gemini 응답 자체가 JSON이 아닙니다.",
+      "Gemini API 응답이 JSON이 아닙니다.",
       {
         detail:
           error?.message ||
           String(error),
+
         raw:
-          rawText.slice(0, 5000)
+          rawText.slice(
+            0,
+            5000
+          )
       }
     );
   }
@@ -754,21 +641,22 @@ JSON만 반환한다.
 
   const finishReason =
     candidate?.finishReason ||
-    candidate?.finish_reason ||
     null;
 
   // ----------------------------------------------------------
-  // MAX TOKENS
+  // MAX TOKEN
   // ----------------------------------------------------------
 
   if (
-    finishReason === "MAX_TOKENS" ||
-    finishReason === "MAX_TOKENS_REACHED"
+    finishReason ===
+      "MAX_TOKENS" ||
+    finishReason ===
+      "MAX_TOKENS_REACHED"
   ) {
     return sendError(
       res,
       500,
-      "Gemini 분석 결과가 길이 제한으로 잘렸습니다.",
+      "Gemini 응답이 중간에 잘렸습니다.",
       {
         finishReason
       }
@@ -780,13 +668,15 @@ JSON만 반환한다.
   // ----------------------------------------------------------
 
   const parts =
-    candidate?.content?.parts || [];
+    candidate?.content?.parts ||
+    [];
 
   const text =
     parts
       .map(
         (part) =>
-          typeof part?.text === "string"
+          typeof part?.text ===
+          "string"
             ? part.text
             : ""
       )
@@ -799,8 +689,7 @@ JSON만 반환한다.
       500,
       "Gemini가 분석 결과를 반환하지 않았습니다.",
       {
-        finishReason,
-        candidate
+        finishReason
       }
     );
   }
@@ -821,11 +710,16 @@ JSON만 반환한다.
       "Gemini가 올바른 JSON을 반환하지 않았습니다.",
       {
         finishReason,
+
         parse_error:
           error?.message ||
           String(error),
+
         raw:
-          text.slice(0, 10000)
+          text.slice(
+            0,
+            10000
+          )
       }
     );
   }
@@ -835,7 +729,9 @@ JSON만 반환한다.
   // ----------------------------------------------------------
 
   const validation =
-    validateBattleResult(result);
+    validateBattleResult(
+      result
+    );
 
   if (!validation.ok) {
     return sendError(
@@ -845,6 +741,7 @@ JSON만 반환한다.
       {
         reason:
           validation.reason,
+
         result
       }
     );
@@ -855,7 +752,9 @@ JSON만 반환한다.
   // ----------------------------------------------------------
 
   result =
-    normalizeBattleResult(result);
+    normalizeBattleResult(
+      result
+    );
 
   // ----------------------------------------------------------
   // SUCCESS
@@ -863,8 +762,11 @@ JSON만 반환한다.
 
   return res.status(200).json({
     ok: true,
+
     model: MODEL,
+
     finishReason,
+
     result
   });
 }
@@ -877,7 +779,10 @@ JSON만 반환한다.
 function sleep(ms) {
   return new Promise(
     (resolve) =>
-      setTimeout(resolve, ms)
+      setTimeout(
+        resolve,
+        ms
+      )
   );
 }
 
@@ -886,21 +791,25 @@ function sleep(ms) {
 // VALIDATION
 // ============================================================
 
-function validateBattleResult(result) {
+function validateBattleResult(
+  result
+) {
   if (
     !result ||
-    typeof result !== "object"
+    typeof result !==
+      "object"
   ) {
     return {
       ok: false,
       reason:
-        "결과가 객체가 아닙니다."
+        "결과 객체가 없습니다."
     };
   }
 
   if (
     !result.attacker ||
-    typeof result.attacker !== "object"
+    typeof result.attacker !==
+      "object"
   ) {
     return {
       ok: false,
@@ -911,7 +820,8 @@ function validateBattleResult(result) {
 
   if (
     !result.defender ||
-    typeof result.defender !== "object"
+    typeof result.defender !==
+      "object"
   ) {
     return {
       ok: false,
@@ -945,28 +855,31 @@ function validateBattleResult(result) {
   }
 
   if (
-    result.attacker.deck.length !== 3
+    result.attacker.deck
+      .length !== 3
   ) {
     return {
       ok: false,
       reason:
-        "공격자 덱이 정확히 3명이 아닙니다."
+        "공격자 장수가 3명이 아닙니다."
     };
   }
 
   if (
-    result.defender.deck.length !== 3
+    result.defender.deck
+      .length !== 3
   ) {
     return {
       ok: false,
       reason:
-        "방어자 덱이 정확히 3명이 아닙니다."
+        "방어자 장수가 3명이 아닙니다."
     };
   }
 
   if (
-    typeof result.attacker.player !==
-    "string"
+    typeof result.attacker
+      .player !== "string" ||
+    !result.attacker.player
   ) {
     return {
       ok: false,
@@ -976,8 +889,9 @@ function validateBattleResult(result) {
   }
 
   if (
-    typeof result.defender.player !==
-    "string"
+    typeof result.defender
+      .player !== "string" ||
+    !result.defender.player
   ) {
     return {
       ok: false,
@@ -997,23 +911,15 @@ function validateBattleResult(result) {
 // ============================================================
 
 function normalizeNumber(
-  value,
-  fallback = null
+  value
 ) {
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return fallback;
-  }
-
   const number =
     Number(value);
 
   if (
     !Number.isFinite(number)
   ) {
-    return fallback;
+    return null;
   }
 
   // -1 = 판독 불가
@@ -1036,22 +942,17 @@ function normalizePromotion(
     Number(value);
 
   if (
-    !Number.isFinite(number)
-  ) {
-    return null;
-  }
-
-  // -1 = 판독 불가
-  if (number === -1) {
-    return null;
-  }
-
-  if (
     !Number.isInteger(number)
   ) {
     return null;
   }
 
+  // 판독 불가
+  if (number === -1) {
+    return null;
+  }
+
+  // 비정상적인 값
   if (
     number < 0 ||
     number > 20
@@ -1088,8 +989,7 @@ function normalizeDeck(
 
         level:
           normalizeNumber(
-            unit?.level,
-            null
+            unit?.level
           ),
 
         promotion:
@@ -1099,14 +999,12 @@ function normalizeDeck(
 
         troops_current:
           normalizeNumber(
-            unit?.troops_current,
-            null
+            unit?.troops_current
           ),
 
         troops_max:
           normalizeNumber(
-            unit?.troops_max,
-            null
+            unit?.troops_max
           )
       })
     );
@@ -1135,14 +1033,12 @@ function normalizeSide(
 
     troops_current:
       normalizeNumber(
-        side?.troops_current,
-        null
+        side?.troops_current
       ),
 
     troops_max:
       normalizeNumber(
-        side?.troops_max,
-        null
+        side?.troops_max
       ),
 
     deck:
