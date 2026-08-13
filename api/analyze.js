@@ -1,202 +1,347 @@
 export default async function handler(req, res) {
 
   // =========================================================
-  // METHOD
+  // 1. METHOD
   // =========================================================
 
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).json({
-      error: 'POST 요청만 허용됩니다.'
+      error: "POST 요청만 허용됩니다."
     });
   }
 
 
   // =========================================================
-  // GEMINI API KEY
+  // 2. API KEY
   // =========================================================
 
   const API_KEY =
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY;
 
-
   if (!API_KEY) {
     return res.status(500).json({
-      error: 'Gemini API 키가 설정되지 않았습니다.',
+      error: "Gemini API 키가 없습니다.",
       detail:
-        'Vercel Environment Variables에서 GEMINI_API_KEY를 확인해주세요.'
+        "Vercel Environment Variables에서 GEMINI_API_KEY를 확인해주세요."
     });
   }
 
 
-  // =========================================================
-  // REQUEST
-  // =========================================================
-
   try {
+
+    // =======================================================
+    // 3. REQUEST
+    // =======================================================
 
     const body = req.body || {};
 
     const image = body.image;
 
     const mimeType =
-      body.mimeType || 'image/jpeg';
+      body.mimeType || "image/jpeg";
 
 
     if (!image) {
       return res.status(400).json({
-        error: '이미지가 전달되지 않았습니다.'
+        error: "이미지가 전달되지 않았습니다."
       });
     }
 
 
     // =======================================================
-    // BASE64 추출
+    // 4. BASE64 추출
     // =======================================================
 
     let base64 = image;
 
     if (
-      typeof image === 'string' &&
-      image.includes(',')
+      typeof image === "string" &&
+      image.includes(",")
     ) {
-      base64 = image.split(',')[1];
+      base64 =
+        image.split(",")[1];
     }
 
 
     if (!base64) {
       return res.status(400).json({
-        error: '이미지 데이터가 비어 있습니다.'
+        error: "이미지 데이터가 비어 있습니다."
       });
     }
 
 
     // =======================================================
-    // GEMINI MODEL
-    // =======================================================
-    //
-    // 현재 안정 모델
-    //
-    // gemini-3.6-flash
-    //
-    // 이미지 입력 지원
-    // 구조화 출력 지원
-    //
+    // 5. MODEL
     // =======================================================
 
-    const MODEL = 'gemini-3.6-flash';
+    const MODEL =
+      "gemini-3.6-flash";
 
 
-    const API_URL =
+    const URL =
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
 
-    // =========================================================
-    // PROMPT
-    // =========================================================
-    //
-    // 긴 설명을 만들지 않는다.
-    //
-    // 필요한 데이터만 추출한다.
-    //
-    // =========================================================
+    // =======================================================
+    // 6. PROMPT
+    // =======================================================
 
     const prompt = `
-너는 삼국지 스타일 모바일 게임의 전투 결과 스크린샷을 분석하는 데이터 추출 AI다.
+이 이미지는 삼국지 스타일 모바일 게임의 전투 결과 화면이다.
 
-이미지 전체를 확인하고 아래 정보를 정확하게 추출해라.
+이미지 전체를 분석해서 다음 정보를 추출한다.
 
-중요:
-- 긴 설명을 절대 작성하지 마라.
-- 분석 과정도 작성하지 마라.
-- 추측하지 마라.
-- 화면에서 확인할 수 없는 값은 null로 한다.
-- 반드시 JSON 하나만 출력한다.
-- Markdown을 사용하지 않는다.
-- 화면의 빨간색 승급 숫자는 매우 중요한 정보이므로 반드시 읽는다.
-- 장수의 이름, 레벨, 승급을 최대한 정확하게 읽는다.
-- 공격측과 방어측을 정확하게 구분한다.
+가장 중요한 정보:
 
-반환 형식:
+1. 공격측 플레이어 닉네임
+2. 공격측 맹 이름
+3. 공격측 장수
+4. 공격측 각 장수의 레벨
+5. 공격측 각 장수의 승급 숫자
+6. 공격측 각 장수의 병력
+7. 방어측 플레이어 닉네임
+8. 방어측 맹 이름
+9. 방어측 장수
+10. 방어측 각 장수의 레벨
+11. 방어측 각 장수의 승급 숫자
+12. 방어측 각 장수의 병력
+13. 전투 결과
 
-{
-  "battle_result": "승리",
-  "attacker": {
-    "player": "닉네임",
-    "clan": "맹 이름",
-    "deck": [
-      {
-        "name": "장수 이름",
-        "level": 50,
-        "promotion": 3,
-        "troops_current": 0,
-        "troops_max": 10000
-      }
-    ]
-  },
-  "defender": {
-    "player": "닉네임",
-    "clan": "맹 이름",
-    "deck": [
-      {
-        "name": "장수 이름",
-        "level": 50,
-        "promotion": 3,
-        "troops_current": 0,
-        "troops_max": 10000
-      }
-    ]
-  },
-  "key_stats": {
-    "attacker_power": null,
-    "defender_power": null
-  }
-}
+특히 장수 카드에 표시된 빨간색 숫자는 승급 숫자다.
 
-규칙:
+레벨과 승급 숫자를 절대로 혼동하지 않는다.
 
-1. battle_result는 반드시 다음 중 하나:
-   - "승리"
-   - "패배"
-   - "확인 불가"
+화면에서 읽을 수 없는 정보는 null로 한다.
 
-2. 공격측:
-   - 화면 왼쪽에 있는 플레이어
-   - 공격측 장수 3명
+추측하지 않는다.
 
-3. 방어측:
-   - 화면 오른쪽에 있는 플레이어
-   - 방어측 장수 3명
+공격측은 화면 왼쪽,
+방어측은 화면 오른쪽이다.
 
-4. 장수:
-   - name = 장수 이름
-   - level = 장수 레벨
-   - promotion = 장수 카드에 표시된 빨간색 승급 숫자
-   - troops_current = 현재 병력
-   - troops_max = 최대 병력
+장수는 화면에 보이는 순서를 유지한다.
 
-5. 승급 숫자는 절대로 레벨과 혼동하지 마라.
+설명문을 만들지 않는다.
+이미지 분석 과정을 출력하지 않는다.
+요약문을 만들지 않는다.
 
-6. 숫자를 확실히 읽을 수 없으면 null.
-
-7. 닉네임과 맹 이름이 확실하지 않으면 null.
-
-8. 반드시 JSON만 출력한다.
+요청된 데이터만 반환한다.
 `;
 
 
-    // =========================================================
-    // GEMINI REQUEST
-    // =========================================================
+    // =======================================================
+    // 7. STRUCTURED OUTPUT SCHEMA
+    // =======================================================
+    //
+    // ★ 핵심
+    //
+    // 이번에는 프롬프트로 JSON을 요구하는 것이 아니라
+    // Gemini API 자체에 JSON 구조를 강제한다.
+    //
+    // =======================================================
+
+    const responseSchema = {
+
+      type: "object",
+
+      properties: {
+
+        battle_result: {
+          type: "string",
+          enum: [
+            "승리",
+            "패배",
+            "확인 불가"
+          ]
+        },
+
+
+        attacker: {
+
+          type: "object",
+
+          properties: {
+
+            player: {
+              type: ["string", "null"]
+            },
+
+            clan: {
+              type: ["string", "null"]
+            },
+
+            deck: {
+
+              type: "array",
+
+              items: {
+
+                type: "object",
+
+                properties: {
+
+                  name: {
+                    type: ["string", "null"]
+                  },
+
+                  level: {
+                    type: ["integer", "null"]
+                  },
+
+                  promotion: {
+                    type: ["integer", "null"]
+                  },
+
+                  troops_current: {
+                    type: ["integer", "null"]
+                  },
+
+                  troops_max: {
+                    type: ["integer", "null"]
+                  }
+
+                },
+
+                required: [
+                  "name",
+                  "level",
+                  "promotion",
+                  "troops_current",
+                  "troops_max"
+                ]
+
+              }
+
+            }
+
+          },
+
+          required: [
+            "player",
+            "clan",
+            "deck"
+          ]
+
+        },
+
+
+        defender: {
+
+          type: "object",
+
+          properties: {
+
+            player: {
+              type: ["string", "null"]
+            },
+
+            clan: {
+              type: ["string", "null"]
+            },
+
+            deck: {
+
+              type: "array",
+
+              items: {
+
+                type: "object",
+
+                properties: {
+
+                  name: {
+                    type: ["string", "null"]
+                  },
+
+                  level: {
+                    type: ["integer", "null"]
+                  },
+
+                  promotion: {
+                    type: ["integer", "null"]
+                  },
+
+                  troops_current: {
+                    type: ["integer", "null"]
+                  },
+
+                  troops_max: {
+                    type: ["integer", "null"]
+                  }
+
+                },
+
+                required: [
+                  "name",
+                  "level",
+                  "promotion",
+                  "troops_current",
+                  "troops_max"
+                ]
+
+              }
+
+            }
+
+          },
+
+          required: [
+            "player",
+            "clan",
+            "deck"
+          ]
+
+        },
+
+
+        key_stats: {
+
+          type: "object",
+
+          properties: {
+
+            attacker_power: {
+              type: ["integer", "null"]
+            },
+
+            defender_power: {
+              type: ["integer", "null"]
+            }
+
+          },
+
+          required: [
+            "attacker_power",
+            "defender_power"
+          ]
+
+        }
+
+      },
+
+      required: [
+        "battle_result",
+        "attacker",
+        "defender",
+        "key_stats"
+      ]
+
+    };
+
+
+    // =======================================================
+    // 8. GEMINI REQUEST
+    // =======================================================
 
     const response =
       await fetch(
-        API_URL,
+        URL,
         {
-          method: 'POST',
+
+          method: "POST",
 
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
           },
 
           body: JSON.stringify({
@@ -204,7 +349,8 @@ export default async function handler(req, res) {
             contents: [
 
               {
-                role: 'user',
+
+                role: "user",
 
                 parts: [
 
@@ -215,9 +361,11 @@ export default async function handler(req, res) {
                   {
                     inline_data: {
 
-                      mime_type: mimeType,
+                      mime_type:
+                        mimeType,
 
-                      data: base64
+                      data:
+                        base64
 
                     }
 
@@ -229,12 +377,23 @@ export default async function handler(req, res) {
 
             ],
 
+
             generationConfig: {
 
               maxOutputTokens: 1200,
 
               responseMimeType:
-                'application/json'
+                "application/json",
+
+              responseSchema:
+                responseSchema,
+
+              thinkingConfig: {
+
+                thinkingLevel:
+                  "low"
+
+              }
 
             }
 
@@ -244,48 +403,51 @@ export default async function handler(req, res) {
       );
 
 
-    // =========================================================
-    // RAW RESPONSE
-    // =========================================================
+    // =======================================================
+    // 9. RAW RESPONSE
+    // =======================================================
 
     const raw =
       await response.text();
 
 
     console.log(
-      'GEMINI HTTP STATUS:',
+      "GEMINI STATUS:",
       response.status
     );
 
 
     console.log(
-      'GEMINI RAW RESPONSE:',
+      "GEMINI RESPONSE:",
       raw
     );
 
 
-    // =========================================================
-    // GEMINI ERROR
-    // =========================================================
+    // =======================================================
+    // 10. GEMINI ERROR
+    // =======================================================
 
     if (!response.ok) {
 
       let errorData;
 
       try {
+
         errorData =
           JSON.parse(raw);
+
       } catch {
+
         errorData = {
           raw: raw
         };
+
       }
 
 
       const message =
         errorData?.error?.message ||
-        errorData?.message ||
-        'Gemini API 요청 실패';
+        "Gemini API 요청 실패";
 
 
       return res.status(
@@ -293,10 +455,7 @@ export default async function handler(req, res) {
       ).json({
 
         error:
-          'Gemini API 요청 실패',
-
-        detail:
-          message,
+          "Gemini API 요청 실패",
 
         httpStatus:
           response.status,
@@ -304,19 +463,26 @@ export default async function handler(req, res) {
         model:
           MODEL,
 
+        detail:
+          message,
+
         raw:
-          raw.substring(0, 5000)
+          raw.substring(
+            0,
+            5000
+          )
 
       });
 
     }
 
 
-    // =========================================================
-    // PARSE GEMINI RESPONSE
-    // =========================================================
+    // =======================================================
+    // 11. RESPONSE JSON PARSE
+    // =======================================================
 
     let geminiData;
+
 
     try {
 
@@ -328,128 +494,10 @@ export default async function handler(req, res) {
       return res.status(500).json({
 
         error:
-          'Gemini 서버 응답을 JSON으로 읽을 수 없습니다.',
+          "Gemini 서버 응답을 읽을 수 없습니다.",
 
         raw:
-          raw.substring(0, 5000)
-
-      });
-
-    }
-
-
-    // =========================================================
-    // TEXT 추출
-    // =========================================================
-
-    const text =
-      geminiData
-        ?.candidates?.[0]
-        ?.content?.parts
-        ?.map(
-          part => part.text || ''
-        )
-        .join('')
-        .trim();
-
-
-    if (!text) {
-
-      return res.status(500).json({
-
-        error:
-          'Gemini가 분석 결과를 반환하지 않았습니다.',
-
-        raw:
-          JSON.stringify(
-            geminiData
-          ).substring(0, 5000)
-
-      });
-
-    }
-
-
-    // =========================================================
-    // JSON CLEAN
-    // =========================================================
-
-    let cleanText =
-      text
-        .replace(
-          /^```json\s*/i,
-          ''
-        )
-        .replace(
-          /^```\s*/i,
-          ''
-        )
-        .replace(
-          /\s*```$/i,
-          ''
-        )
-        .trim();
-
-
-    // =========================================================
-    // STRUCTURED JSON
-    // =========================================================
-
-    let structured = null;
-
-
-    try {
-
-      structured =
-        JSON.parse(cleanText);
-
-    } catch {
-
-      // 혹시 앞뒤에 이상한 문자가 붙은 경우
-
-      const first =
-        cleanText.indexOf('{');
-
-      const last =
-        cleanText.lastIndexOf('}');
-
-
-      if (
-        first !== -1 &&
-        last !== -1 &&
-        last > first
-      ) {
-
-        try {
-
-          structured =
-            JSON.parse(
-              cleanText.substring(
-                first,
-                last + 1
-              )
-            );
-
-        } catch {
-
-          structured = null;
-
-        }
-
-      }
-
-    }
-
-
-    if (!structured) {
-
-      return res.status(500).json({
-
-        error:
-          'AI가 올바른 JSON을 반환하지 않았습니다.',
-
-        detail:
-          cleanText.substring(
+          raw.substring(
             0,
             5000
           )
@@ -459,9 +507,75 @@ export default async function handler(req, res) {
     }
 
 
-    // =========================================================
-    // NORMALIZE
-    // =========================================================
+    // =======================================================
+    // 12. GEMINI TEXT
+    // =======================================================
+
+    const text =
+      geminiData
+        ?.candidates?.[0]
+        ?.content?.parts
+        ?.map(
+          part =>
+            part.text || ""
+        )
+        .join("")
+        .trim();
+
+
+    if (!text) {
+
+      return res.status(500).json({
+
+        error:
+          "Gemini가 분석 결과를 반환하지 않았습니다.",
+
+        raw:
+          JSON.stringify(
+            geminiData
+          ).substring(
+            0,
+            5000
+          )
+
+      });
+
+    }
+
+
+    // =======================================================
+    // 13. JSON PARSE
+    // =======================================================
+
+    let structured;
+
+
+    try {
+
+      structured =
+        JSON.parse(text);
+
+    } catch {
+
+      return res.status(500).json({
+
+        error:
+          "Gemini가 올바른 JSON을 반환하지 않았습니다.",
+
+        detail:
+          text.substring(
+            0,
+            5000
+          )
+
+      });
+
+    }
+
+
+    // =======================================================
+    // 14. NORMALIZE
+    // =======================================================
 
     structured =
       normalizeResult(
@@ -469,9 +583,9 @@ export default async function handler(req, res) {
       );
 
 
-    // =========================================================
-    // SHORT RESULT
-    // =========================================================
+    // =======================================================
+    // 15. 짧은 결과 생성
+    // =======================================================
 
     const result =
       makeShortResult(
@@ -479,18 +593,16 @@ export default async function handler(req, res) {
       );
 
 
-    // =========================================================
-    // FINAL RESPONSE
-    // =========================================================
+    // =======================================================
+    // 16. SUCCESS
+    // =======================================================
 
     return res.status(200).json({
 
       result:
-
         result,
 
       structured:
-
         structured
 
     });
@@ -499,7 +611,7 @@ export default async function handler(req, res) {
   } catch (error) {
 
     console.error(
-      'ANALYZE SERVER ERROR:',
+      "SERVER ERROR:",
       error
     );
 
@@ -507,7 +619,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
 
       error:
-        '분석 서버 오류',
+        "분석 서버 오류",
 
       detail:
         error?.message ||
@@ -521,7 +633,7 @@ export default async function handler(req, res) {
 
 
 /* ===========================================================
-   NORMALIZE RESULT
+   NORMALIZE
 =========================================================== */
 
 function normalizeResult(data) {
@@ -546,13 +658,15 @@ function normalizeResult(data) {
     key_stats: {
 
       attacker_power:
-        toNumberOrNull(
-          data?.key_stats?.attacker_power
+        numberOrNull(
+          data?.key_stats
+            ?.attacker_power
         ),
 
       defender_power:
-        toNumberOrNull(
-          data?.key_stats?.defender_power
+        numberOrNull(
+          data?.key_stats
+            ?.defender_power
         )
 
     }
@@ -563,7 +677,7 @@ function normalizeResult(data) {
 
 
 /* ===========================================================
-   NORMALIZE SIDE
+   SIDE
 =========================================================== */
 
 function normalizeSide(side) {
@@ -582,49 +696,44 @@ function normalizeSide(side) {
   return {
 
     player:
-      side.player
-        ? String(
-            side.player
-          ).trim()
-        : null,
+      cleanString(
+        side.player
+      ),
 
     clan:
-      side.clan
-        ? String(
-            side.clan
-          ).trim()
-        : null,
+      cleanString(
+        side.clan
+      ),
 
     deck:
+
       deck
         .slice(0, 5)
         .map(
           hero => ({
 
             name:
-              hero?.name
-                ? String(
-                    hero.name
-                  ).trim()
-                : null,
+              cleanString(
+                hero?.name
+              ),
 
             level:
-              toNumberOrNull(
+              numberOrNull(
                 hero?.level
               ),
 
             promotion:
-              toNumberOrNull(
+              numberOrNull(
                 hero?.promotion
               ),
 
             troops_current:
-              toNumberOrNull(
+              numberOrNull(
                 hero?.troops_current
               ),
 
             troops_max:
-              toNumberOrNull(
+              numberOrNull(
                 hero?.troops_max
               )
 
@@ -637,32 +746,23 @@ function normalizeSide(side) {
 
 
 /* ===========================================================
-   BATTLE RESULT
+   STRING
 =========================================================== */
 
-function normalizeBattleResult(value) {
-
-  const text =
-    String(
-      value || ''
-    ).trim();
-
+function cleanString(value) {
 
   if (
-    text.includes('승')
+    value === null ||
+    value === undefined ||
+    value === ""
   ) {
-    return '승리';
+    return null;
   }
 
 
-  if (
-    text.includes('패')
-  ) {
-    return '패배';
-  }
-
-
-  return '확인 불가';
+  return String(
+    value
+  ).trim();
 
 }
 
@@ -671,23 +771,23 @@ function normalizeBattleResult(value) {
    NUMBER
 =========================================================== */
 
-function toNumberOrNull(value) {
+function numberOrNull(value) {
 
   if (
     value === null ||
     value === undefined ||
-    value === ''
+    value === ""
   ) {
     return null;
   }
 
 
   if (
-    typeof value === 'number'
+    typeof value === "number"
   ) {
 
     return Number.isFinite(value)
-      ? value
+      ? Math.round(value)
       : null;
 
   }
@@ -695,8 +795,14 @@ function toNumberOrNull(value) {
 
   const cleaned =
     String(value)
-      .replace(/,/g, '')
-      .replace(/[^0-9.-]/g, '');
+      .replace(
+        /,/g,
+        ""
+      )
+      .replace(
+        /[^0-9.-]/g,
+        ""
+      );
 
 
   if (!cleaned) {
@@ -704,13 +810,46 @@ function toNumberOrNull(value) {
   }
 
 
-  const number =
+  const n =
     Number(cleaned);
 
 
-  return Number.isFinite(number)
-    ? number
+  return Number.isFinite(n)
+    ? Math.round(n)
     : null;
+
+}
+
+
+/* ===========================================================
+   BATTLE RESULT
+=========================================================== */
+
+function normalizeBattleResult(
+  value
+) {
+
+  const text =
+    String(
+      value || ""
+    );
+
+
+  if (
+    text.includes("승")
+  ) {
+    return "승리";
+  }
+
+
+  if (
+    text.includes("패")
+  ) {
+    return "패배";
+  }
+
+
+  return "확인 불가";
 
 }
 
@@ -719,7 +858,9 @@ function toNumberOrNull(value) {
    SHORT RESULT
 =========================================================== */
 
-function makeShortResult(data) {
+function makeShortResult(
+  data
+) {
 
   const lines = [];
 
@@ -734,12 +875,12 @@ function makeShortResult(data) {
     lines.push(
       `공격: ${
         data.attacker.player ||
-        '확인 불가'
+        "확인 불가"
       }` +
       (
         data.attacker.clan
           ? ` / ${data.attacker.clan}`
-          : ''
+          : ""
       )
     );
 
@@ -749,16 +890,16 @@ function makeShortResult(data) {
     ) {
 
       lines.push(
-        '공격 덱: ' +
+        "공격 덱: " +
 
         data.attacker.deck
           .map(
             hero =>
-              `${hero.name || '?'} ` +
-              `Lv.${hero.level ?? '?'} ` +
-              `승급 ${hero.promotion ?? '?'}`
+              `${hero.name || "?"} ` +
+              `Lv.${hero.level ?? "?"} ` +
+              `승급 ${hero.promotion ?? "?"}`
           )
-          .join(' · ')
+          .join(" · ")
       );
 
     }
@@ -771,12 +912,12 @@ function makeShortResult(data) {
     lines.push(
       `방어: ${
         data.defender.player ||
-        '확인 불가'
+        "확인 불가"
       }` +
       (
         data.defender.clan
           ? ` / ${data.defender.clan}`
-          : ''
+          : ""
       )
     );
 
@@ -786,16 +927,16 @@ function makeShortResult(data) {
     ) {
 
       lines.push(
-        '방어 덱: ' +
+        "방어 덱: " +
 
         data.defender.deck
           .map(
             hero =>
-              `${hero.name || '?'} ` +
-              `Lv.${hero.level ?? '?'} ` +
-              `승급 ${hero.promotion ?? '?'}`
+              `${hero.name || "?"} ` +
+              `Lv.${hero.level ?? "?"} ` +
+              `승급 ${hero.promotion ?? "?"}`
           )
-          .join(' · ')
+          .join(" · ")
       );
 
     }
@@ -803,6 +944,6 @@ function makeShortResult(data) {
   }
 
 
-  return lines.join('\n');
+  return lines.join("\n");
 
 }
