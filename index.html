@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>수라 전투부대</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,136 +21,17 @@ body{
 }
 
 main{
-  max-width:1100px;
+  max-width:1150px;
   margin:auto;
-  padding:22px 16px 80px
-}
-
-.hero{
-  padding:34px 30px;
-  border:1px solid #4a3c22;
-  border-radius:26px;
-  background:linear-gradient(125deg,#211a10,#11151b 58%,#0b0e13);
-  box-shadow:0 18px 55px #0008
-}
-
-.eyebrow{
-  color:#d6ae59;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:5px
-}
-
-.hero h1{
-  margin:8px 0 5px;
-  font-size:40px
-}
-
-.hero p{
-  margin:0;
-  color:#aeb5bd
-}
-
-.quick{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  margin:16px 0
-}
-
-.quick button{
-  min-height:88px;
-  text-align:left
-}
-
-.quick button b{
-  display:block;
-  font-size:17px;
-  margin-bottom:5px
-}
-
-.quick button span{
-  display:block;
-  font-size:12px;
-  opacity:.7
-}
-
-.card{
-  background:#10161d;
-  border:1px solid #2b3540;
-  border-radius:20px;
-  padding:22px;
-  margin:16px 0;
-  box-shadow:0 12px 30px #0005
-}
-
-.title{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom:8px
-}
-
-.title i{
-  width:5px;
-  height:22px;
-  border-radius:4px;
-  background:#d6ae59
-}
-
-.title h2{
-  margin:0;
-  font-size:19px
-}
-
-.sub,
-.small{
-  color:#8f99a5;
-  font-size:13px
-}
-
-.sub{
-  margin-bottom:18px
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px
-}
-
-label{
-  display:block;
-  color:#aeb7c1;
-  font-size:13px;
-  font-weight:700;
-  margin:7px 0
-}
-
-input,
-textarea,
-select{
-  width:100%;
-  color:#f5f5f5;
-  background:#080c10;
-  border:1px solid #303b47;
-  border-radius:12px;
-  padding:13px 14px;
-  font-size:15px;
-  outline:none
-}
-
-textarea{
-  min-height:260px;
-  resize:vertical
+  padding:20px 16px 80px
 }
 
 button{
   border:0;
-  border-radius:12px;
+  border-radius:13px;
   padding:13px 18px;
   margin:4px;
-  font-size:15px;
+  font-size:14px;
   font-weight:900;
   cursor:pointer;
   background:linear-gradient(135deg,#e0bc69,#bd9342);
@@ -172,51 +54,160 @@ button:disabled{
   cursor:not-allowed
 }
 
-.drop{
-  border:1px dashed #596575;
-  border-radius:16px;
-  padding:28px;
-  text-align:center;
-  background:#0a0f14
+input,
+textarea,
+select{
+  width:100%;
+  color:#f5f5f5;
+  background:#080c10;
+  border:1px solid #303b47;
+  border-radius:12px;
+  padding:13px 14px;
+  font-size:15px;
+  outline:none
 }
 
-.drop input{
-  border:0;
-  background:transparent
+textarea{
+  min-height:240px;
+  resize:vertical
 }
 
-.preview{
+label{
   display:block;
-  max-width:100%;
-  max-height:470px;
-  margin:16px auto;
-  border-radius:14px
-}
-
-.progress{
-  height:9px;
-  background:#26303a;
-  border-radius:20px;
-  overflow:hidden;
-  margin-top:14px
-}
-
-.bar{
-  height:100%;
-  width:0;
-  background:linear-gradient(90deg,#9e782e,#e0bd68);
-  transition:.25s
-}
-
-.status{
-  color:#d6ae59;
-  font-weight:800;
+  color:#aeb7c1;
   font-size:13px;
-  margin-top:9px
+  font-weight:800;
+  margin:8px 0
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero{
+  padding:36px 30px;
+  border:1px solid #4a3c22;
+  border-radius:26px;
+  background:
+    radial-gradient(
+      circle at 90% 20%,
+      #403319 0,
+      transparent 30%
+    ),
+    linear-gradient(
+      125deg,
+      #211a10,
+      #11151b 58%,
+      #0b0e13
+    );
+  box-shadow:0 18px 55px #0008
+}
+
+.eyebrow{
+  color:#d6ae59;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:5px
+}
+
+.hero h1{
+  margin:8px 0 6px;
+  font-size:42px
+}
+
+.hero p{
+  margin:0;
+  color:#aeb5bd
+}
+
+/* =========================
+   QUICK MENU
+========================= */
+
+.quick{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin:16px 0
+}
+
+.quick button{
+  min-height:92px;
+  text-align:left;
+  transition:.18s
+}
+
+.quick button:hover{
+  transform:translateY(-2px)
+}
+
+.quick .primary{
+  background:
+    linear-gradient(
+      135deg,
+      #e0bc69,
+      #b98d38
+    )
+}
+
+.quick button b{
+  display:block;
+  font-size:18px;
+  margin-bottom:7px
+}
+
+.quick button span{
+  display:block;
+  font-size:12px;
+  opacity:.72
+}
+
+/* =========================
+   COMMON CARD
+========================= */
+
+.card{
+  background:#10161d;
+  border:1px solid #2b3540;
+  border-radius:20px;
+  padding:22px;
+  margin:16px 0;
+  box-shadow:0 12px 30px #0005
+}
+
+.title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:7px
+}
+
+.title i{
+  width:5px;
+  height:23px;
+  border-radius:4px;
+  background:#d6ae59
+}
+
+.title h2{
+  margin:0;
+  font-size:20px
+}
+
+.sub{
+  color:#8f99a5;
+  font-size:13px;
+  margin-bottom:18px
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px
 }
 
 .message{
-  padding:12px;
+  padding:13px;
   border-radius:12px;
   margin-top:10px;
   font-size:13px;
@@ -233,127 +224,6 @@ button:disabled{
   color:#b9e7c9;
   background:#0d1a13;
   border:1px solid #315a42
-}
-
-.hidden{
-  display:none!important
-}
-
-.result{
-  white-space:pre-wrap;
-  word-break:break-word;
-  background:#080c10;
-  border:1px solid #303a44;
-  border-radius:14px;
-  padding:16px;
-  line-height:1.7;
-  font-size:14px
-}
-
-.searchrow{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:8px
-}
-
-.record{
-  padding:16px;
-  margin:10px 0;
-  background:#0a0f14;
-  border:1px solid #2b343e;
-  border-radius:15px
-}
-
-.recordhead{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap
-}
-
-.gold{
-  color:#d6ae59;
-  font-weight:900
-}
-
-.meta{
-  color:#8f99a5;
-  font-size:12px
-}
-
-.tag{
-  display:inline-block;
-  padding:4px 8px;
-  margin:2px;
-  border-radius:999px;
-  background:#202b37;
-  color:#cbd3db;
-  font-size:11px
-}
-
-.empty{
-  text-align:center;
-  color:#7f8a95;
-  border:1px dashed #303944;
-  border-radius:14px;
-  padding:25px
-}
-
-.member{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:14px;
-  background:#0a0f14;
-  border:1px solid #2b343e;
-  border-radius:14px;
-  margin:8px 0
-}
-
-.member .info{
-  flex:1
-}
-
-.member .name{
-  font-weight:900;
-  font-size:16px
-}
-
-.member .actions{
-  white-space:nowrap
-}
-
-.pill{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:999px;
-  font-size:11px;
-  background:#292f37;
-  color:#cbd3db
-}
-
-.pill.pending{
-  background:#4a3a1d;
-  color:#e8c56e
-}
-
-.pill.approved{
-  background:#153b27;
-  color:#9ee0b7
-}
-
-.pill.rejected{
-  background:#421f22;
-  color:#e9a1a1
-}
-
-.adminbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap
 }
 
 .notice{
@@ -380,116 +250,398 @@ button:disabled{
   padding:16px
 }
 
-
-/* =========================
-   덱 조회
-========================= */
-
-.deckSearchBox{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:8px;
-  margin-bottom:14px
-}
-
-.deckHeader{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap;
-  padding-bottom:12px;
-  border-bottom:1px solid #29323c;
-  margin-bottom:14px
-}
-
-.deckUser{
-  font-size:20px;
-  font-weight:900
-}
-
-.deckClan{
-  color:#d6ae59;
-  font-size:13px
-  ;
-}
-
-.deckDate{
+.small{
   color:#8f99a5;
   font-size:12px
 }
 
-.deckSide{
-  margin-top:16px;
-  border:1px solid #303a44;
+.hidden{
+  display:none!important
+}
+
+/* =========================
+   IMAGE ANALYSIS
+========================= */
+
+.drop{
+  border:1px dashed #596575;
   border-radius:16px;
+  padding:28px;
+  text-align:center;
+  background:#0a0f14
+}
+
+.drop input{
+  border:0;
+  background:transparent
+}
+
+.preview{
+  display:block;
+  max-width:100%;
+  max-height:520px;
+  margin:16px auto;
+  border-radius:14px
+}
+
+.progress{
+  height:9px;
+  background:#26303a;
+  border-radius:20px;
   overflow:hidden;
-  background:#080c10
+  margin-top:14px
 }
 
-.deckSideTitle{
-  padding:12px 15px;
-  font-size:14px;
-  font-weight:900;
-  background:#111820;
-  border-bottom:1px solid #303a44
+.bar{
+  height:100%;
+  width:0;
+  background:linear-gradient(
+    90deg,
+    #9e782e,
+    #e0bd68
+  );
+  transition:.25s
 }
 
-.deckGrid{
+.status{
+  color:#d6ae59;
+  font-weight:800;
+  font-size:13px;
+  margin-top:9px
+}
+
+/* =========================
+   SEARCH
+========================= */
+
+.searchrow{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:8px;
-  padding:12px
+  grid-template-columns:1fr auto;
+  gap:8px
 }
 
-.heroCard{
-  min-height:95px;
-  border:1px solid #303a44;
-  border-radius:12px;
-  padding:10px 7px;
-  background:#10161d;
-  text-align:center
+/* =========================
+   APPROVAL
+========================= */
+
+.adminbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap
 }
 
-.heroNumber{
-  width:23px;
-  height:23px;
-  margin:0 auto 7px;
+.member{
   display:flex;
   align-items:center;
-  justify-content:center;
-  border-radius:50%;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px;
+  background:#0a0f14;
+  border:1px solid #2b343e;
+  border-radius:14px;
+  margin:8px 0
+}
+
+.member .info{
+  flex:1
+}
+
+.member .name{
+  font-weight:900;
+  font-size:16px
+}
+
+.member .actions{
+  white-space:nowrap
+}
+
+.pill{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:11px;
   background:#292f37;
+  color:#cbd3db;
+  margin:2px
+}
+
+.pill.pending{
+  background:#4a3a1d;
+  color:#e8c56e
+}
+
+.pill.approved{
+  background:#153b27;
+  color:#9ee0b7
+}
+
+.pill.rejected{
+  background:#421f22;
+  color:#e9a1a1
+}
+
+/* =========================
+   BATTLE CARD
+========================= */
+
+.battleCard{
+  background:#080d12;
+  border:1px solid #293540;
+  border-radius:18px;
+  margin:13px 0;
+  overflow:hidden
+}
+
+.battleTop{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 18px;
+  border-bottom:1px solid #293540;
+  flex-wrap:wrap
+}
+
+.battleResult{
+  font-size:18px;
+  font-weight:900;
+  color:#d6ae59
+}
+
+.battlePlayers{
+  margin-top:7px;
+  font-size:13px;
+  color:#cbd3db
+}
+
+.battleDate{
+  color:#7f8994;
+  font-size:11px
+}
+
+.battleDeckArea{
+  padding:16px
+}
+
+.vs{
+  text-align:center;
+  color:#65707b;
+  font-size:12px;
+  font-weight:900;
+  margin:8px 0
+}
+
+.deckPanel{
+  border:1px solid #303b46;
+  border-radius:15px;
+  overflow:hidden;
+  background:#0c1218
+}
+
+.deckPanelTitle{
+  padding:11px 14px;
+  background:#121a22;
+  border-bottom:1px solid #303b46;
+  font-size:13px;
+  font-weight:900
+}
+
+.deckPanelTitle.attack{
+  color:#e0bc69
+}
+
+.deckPanelTitle.defense{
+  color:#9db8d5
+}
+
+.heroGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+  padding:11px
+}
+
+.heroUnit{
+  min-height:125px;
+  padding:12px 8px;
+  text-align:center;
+  background:#111820;
+  border:1px solid #303b46;
+  border-radius:13px
+}
+
+.heroNo{
+  width:24px;
+  height:24px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:0 auto 8px;
+  border-radius:50%;
+  background:#29323b;
   color:#d6ae59;
   font-size:11px;
   font-weight:900
 }
 
 .heroName{
-  font-size:13px;
+  font-size:15px;
   font-weight:900;
   word-break:keep-all
 }
 
-.heroTroop{
-  color:#8f99a5;
+.heroLevel{
+  margin-top:6px;
   font-size:11px;
-  margin-top:5px
+  color:#b9c3cd
 }
 
-.deckRaw{
-  margin-top:12px
+.heroPromotion{
+  margin-top:4px;
+  color:#ff6666;
+  font-size:12px;
+  font-weight:900
 }
 
-.deckRaw summary{
-  cursor:pointer;
+.heroTroops{
+  margin-top:7px;
+  color:#84909c;
+  font-size:10px
+}
+
+.detailBtn{
+  width:100%;
+  margin:0;
+  border-radius:0;
+  background:#111820;
+  color:#9aa5af;
+  border-top:1px solid #293540
+}
+
+.detailBox{
+  padding:15px;
+  border-top:1px solid #293540;
+  background:#080c10;
+  white-space:pre-wrap;
+  line-height:1.7;
+  font-size:13px;
+  color:#d8dce0
+}
+
+/* =========================
+   DECK SEARCH
+========================= */
+
+.deckSearchBox{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  margin-bottom:12px
+}
+
+.simpleDeck{
+  margin:13px 0;
+  padding:18px;
+  border:1px solid #3c4a58;
+  border-radius:18px;
+  background:
+    linear-gradient(
+      135deg,
+      #17150f,
+      #0c1117
+    )
+}
+
+.simpleDeckTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #353229
+}
+
+.simpleDeckUser{
+  font-size:21px;
+  font-weight:900
+}
+
+.simpleDeckClan{
+  color:#d6ae59;
+  font-size:13px;
+  margin-top:3px
+}
+
+.simpleDeckDate{
+  color:#7f8993;
+  font-size:11px
+}
+
+.simpleDeckTitle{
+  margin:14px 0 10px;
+  font-size:14px;
+  font-weight:900
+}
+
+.simpleDeckTitle span{
+  float:right;
+  color:#d6ae59
+}
+
+.simpleHeroGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px
+}
+
+.simpleHero{
+  min-height:112px;
+  padding:13px 8px;
+  border:1px solid #353e48;
+  border-radius:13px;
+  background:#10161d;
+  text-align:center
+}
+
+.simpleHeroNo{
+  width:22px;
+  height:22px;
+  line-height:22px;
+  margin:0 auto 7px;
+  border-radius:50%;
+  background:#29313a;
+  color:#d6ae59;
+  font-size:11px;
+  font-weight:900
+}
+
+.simpleHeroName{
+  font-size:15px;
+  font-weight:900
+}
+
+.simpleHeroInfo{
+  margin-top:7px;
+  color:#d6ae59;
+  font-size:11px
+}
+
+.simpleHeroPromotion{
+  margin-top:4px;
+  color:#ff6666;
+  font-size:11px;
+  font-weight:900
+}
+
+.simpleHeroTroop{
+  margin-top:5px;
   color:#8f99a5;
-  font-size:12px
+  font-size:10px
 }
 
-
-/* 덱 결과 없을 때 */
-.deckEmpty{
+.deckEmpty,
+.empty{
   padding:28px;
   text-align:center;
   color:#7f8a95;
@@ -497,8 +649,9 @@ button:disabled{
   border-radius:14px
 }
 
-
-/* ========================= */
+/* =========================
+   RESPONSIVE
+========================= */
 
 @media(max-width:700px){
 
@@ -529,12 +682,12 @@ button:disabled{
     white-space:normal
   }
 
-  .deckGrid{
+  .heroGrid,
+  .simpleHeroGrid{
     grid-template-columns:repeat(2,1fr)
   }
 
 }
-
 </style>
 </head>
 
@@ -553,7 +706,7 @@ button:disabled{
   </h1>
 
   <p>
-    전투 스크린샷을 AI로 판독하고 유저와 맹의 전투 기록 및 덱을 관리합니다.
+    전투 스크린샷 → AI 판독 → 전투 기록 → 덱 관리
   </p>
 
 </header>
@@ -562,27 +715,33 @@ button:disabled{
 <div id="accessNotice" class="card hidden"></div>
 
 
-<!-- 빠른 이동 -->
+<!-- =========================
+     QUICK MENU
+========================= -->
 
 <div class="quick">
 
-  <button class="primary" id="goAnalysis">
+  <button
+    class="primary"
+    id="goAnalysis">
 
     <b>⚔ 전투 분석</b>
 
     <span>
-      스크린샷 → AI 전체 화면 판독 → 전투 기록 저장
+      스크린샷을 올리고 전투 결과와 무장 정보를 저장합니다.
     </span>
 
   </button>
 
 
-  <button class="secondary" id="goDeck">
+  <button
+    class="secondary"
+    id="goDeck">
 
-    <b>🛡 유저 덱 조회</b>
+    <b>🛡 유저 / 맹 검색</b>
 
     <span>
-      닉네임 검색 → 최근 전투 덱 확인
+      유저를 검색하면 전투 기록과 덱을 확인합니다.
     </span>
 
   </button>
@@ -590,9 +749,9 @@ button:disabled{
 </div>
 
 
-<!-- ======================
-     전투원 등록
-====================== -->
+<!-- =========================
+     PROFILE
+========================= -->
 
 <section class="card">
 
@@ -603,7 +762,7 @@ button:disabled{
 
   <div class="sub">
     이메일 회원가입 없이 게임 닉네임과 맹 이름만 등록합니다.
-    관리자의 승인 후 이용할 수 있습니다.
+    등록 후 관리자 승인을 받으면 이용할 수 있습니다.
   </div>
 
 
@@ -617,8 +776,7 @@ button:disabled{
 
       <input
         id="nickname"
-        placeholder="예: 토리아빠"
-      >
+        placeholder="예: 토리아빠">
 
     </div>
 
@@ -631,8 +789,7 @@ button:disabled{
 
       <input
         id="clanName"
-        placeholder="예: 수라"
-      >
+        placeholder="예: 수라">
 
     </div>
 
@@ -652,10 +809,9 @@ button:disabled{
 </section>
 
 
-
-<!-- ======================
-     승인 관리
-====================== -->
+<!-- =========================
+     APPROVAL
+========================= -->
 
 <section
   class="card hidden"
@@ -667,7 +823,7 @@ button:disabled{
   </div>
 
   <div class="sub">
-    승인 권한이 있는 사람만 볼 수 있습니다.
+    승인 권한이 있는 관리자 또는 승인권자가 관리합니다.
   </div>
 
 
@@ -711,10 +867,9 @@ button:disabled{
 </section>
 
 
-
-<!-- ======================
-     AI 분석
-====================== -->
+<!-- =========================
+     ANALYSIS
+========================= -->
 
 <section
   class="card"
@@ -726,7 +881,7 @@ button:disabled{
   </div>
 
   <div class="sub">
-    승인된 전투원만 사용할 수 있습니다.
+    실제 게임 전투 결과 화면 전체를 올려주세요.
   </div>
 
 
@@ -734,8 +889,7 @@ button:disabled{
     id="analysisLocked"
     class="notice hidden">
 
-    아직 승인되지 않았습니다.
-    관리자 승인을 받은 뒤 전투 분석을 사용할 수 있습니다.
+    관리자 승인을 받은 뒤 사용할 수 있습니다.
 
   </div>
 
@@ -747,8 +901,7 @@ button:disabled{
       <input
         id="file"
         type="file"
-        accept="image/*"
-      >
+        accept="image/*">
 
       <div class="small">
         JPG / PNG · 원본 화면 전체 권장
@@ -760,8 +913,7 @@ button:disabled{
     <img
       id="preview"
       class="preview"
-      hidden
-    >
+      hidden>
 
 
     <button id="run">
@@ -772,9 +924,7 @@ button:disabled{
     <button
       class="secondary"
       onclick="resetAnalysis()">
-
       초기화
-
     </button>
 
 
@@ -791,9 +941,7 @@ button:disabled{
     <div
       id="status"
       class="status">
-
       대기 중
-
     </div>
 
 
@@ -807,10 +955,9 @@ button:disabled{
 </section>
 
 
-
-<!-- ======================
-     AI 결과
-====================== -->
+<!-- =========================
+     RESULT
+========================= -->
 
 <section
   class="card hidden"
@@ -818,7 +965,7 @@ button:disabled{
 
   <div class="title">
     <i></i>
-    <h2>④ 전투 보고서</h2>
+    <h2>④ 전투 결과 확인</h2>
   </div>
 
 
@@ -832,17 +979,9 @@ button:disabled{
 
       <select id="battleResult">
 
-        <option>
-          승리
-        </option>
-
-        <option>
-          패배
-        </option>
-
-        <option>
-          확인 불가
-        </option>
+        <option>승리</option>
+        <option>패배</option>
+        <option>확인 불가</option>
 
       </select>
 
@@ -857,7 +996,7 @@ button:disabled{
 
       <input
         id="opponentName"
-        placeholder="상대 닉네임">
+        placeholder="AI 판독값 또는 직접 입력">
 
     </div>
 
@@ -870,7 +1009,7 @@ button:disabled{
 
   <input
     id="opponentClan"
-    placeholder="상대 맹 이름">
+    placeholder="AI 판독값 또는 직접 입력">
 
 
   <label>
@@ -880,6 +1019,12 @@ button:disabled{
   <textarea id="result"></textarea>
 
 
+  <div
+    id="structuredPreview"
+    style="margin-top:16px">
+  </div>
+
+
   <label>
     메모
   </label>
@@ -887,12 +1032,11 @@ button:disabled{
   <textarea
     id="memo"
     style="min-height:90px"
-    placeholder="추가로 남길 내용">
-  </textarea>
+    placeholder="추가로 남길 내용"></textarea>
 
 
   <button id="save">
-    전투 기록 저장
+    💾 전투 기록 저장
   </button>
 
 
@@ -904,10 +1048,9 @@ button:disabled{
 </section>
 
 
-
-<!-- ======================
-     덱 조회
-====================== -->
+<!-- =========================
+     DECK SEARCH
+========================= -->
 
 <section
   class="card"
@@ -919,7 +1062,7 @@ button:disabled{
   </div>
 
   <div class="sub">
-    게임 닉네임을 검색하면 해당 유저가 사용한 최근 전투 덱을 확인합니다.
+    전투 기록을 기반으로 해당 유저의 최근 덱을 보여줍니다.
   </div>
 
 
@@ -927,7 +1070,7 @@ button:disabled{
     id="deckLocked"
     class="notice hidden">
 
-    관리자 승인을 받은 뒤 덱 조회를 사용할 수 있습니다.
+    관리자 승인을 받은 뒤 사용할 수 있습니다.
 
   </div>
 
@@ -938,7 +1081,7 @@ button:disabled{
 
       <input
         id="deckSearch"
-        placeholder="예: 토리아빠">
+        placeholder="유저 닉네임 검색">
 
       <button id="deckSearchBtn">
         🛡 덱 조회
@@ -966,10 +1109,9 @@ button:disabled{
 </section>
 
 
-
-<!-- ======================
-     전투 검색
-====================== -->
+<!-- =========================
+     BATTLE SEARCH
+========================= -->
 
 <section
   class="card"
@@ -981,7 +1123,7 @@ button:disabled{
   </div>
 
   <div class="sub">
-    승인된 전투원과 전투 기록만 검색됩니다.
+    유저 또는 맹 이름으로 지금까지의 전투 기록을 검색합니다.
   </div>
 
 
@@ -989,7 +1131,7 @@ button:disabled{
     id="searchLocked"
     class="notice hidden">
 
-    관리자 승인을 받은 뒤 검색 기능을 사용할 수 있습니다.
+    관리자 승인을 받은 뒤 사용할 수 있습니다.
 
   </div>
 
@@ -1000,10 +1142,10 @@ button:disabled{
 
       <input
         id="search"
-        placeholder="예: 토리아빠 / 수라 / 조조">
+        placeholder="예: 토리아빠 / 수라">
 
       <button id="searchBtn">
-        검색
+        🔎 검색
       </button>
 
     </div>
@@ -1019,7 +1161,8 @@ button:disabled{
 
 
     <div
-      id="searchResults">
+      id="searchResults"
+      style="margin-top:14px">
     </div>
 
   </div>
@@ -1027,10 +1170,9 @@ button:disabled{
 </section>
 
 
-
-<!-- ======================
-     내 전투 기록
-====================== -->
+<!-- =========================
+     MY BATTLES
+========================= -->
 
 <section class="card">
 
@@ -1038,7 +1180,6 @@ button:disabled{
     <i></i>
     <h2>⑦ 내 전투 기록</h2>
   </div>
-
 
   <div id="myBattles">
   </div>
@@ -1049,20 +1190,17 @@ button:disabled{
 </main>
 
 
-
 <script>
 
-
-/* =====================================
+/* =========================================================
    SUPABASE
-===================================== */
+========================================================= */
 
 const SUPABASE_URL =
 "https://wwztnwyhsxvumsnaifgd.supabase.co";
 
 const SUPABASE_KEY =
 "sb_publishable_JSjLC_CYnQkbsj6aLZv2Pw_CCPyNt0-";
-
 
 const db =
 window.supabase.createClient(
@@ -1071,18 +1209,26 @@ window.supabase.createClient(
 );
 
 
+/* =========================================================
+   STATE
+========================================================= */
 
 let currentUser = null;
-
 let profile = null;
-
 let imageData = null;
 
+/*
+  ★ Gemini가 반환한 구조화 데이터
+*/
+let lastStructuredAnalysis = null;
 
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 const $ =
 id => document.getElementById(id);
-
 
 
 function esc(v){
@@ -1102,7 +1248,6 @@ function esc(v){
 }
 
 
-
 function msg(
   id,
   text,
@@ -1111,13 +1256,14 @@ function msg(
 
   const e = $(id);
 
+  if(!e) return;
+
   e.textContent = text;
 
   e.className =
     'message ' + type;
 
 }
-
 
 
 function progress(
@@ -1134,7 +1280,6 @@ function progress(
 }
 
 
-
 function isApproved(){
 
   return !!profile &&
@@ -1145,7 +1290,6 @@ function isApproved(){
     );
 
 }
-
 
 
 function isApprover(){
@@ -1159,10 +1303,9 @@ function isApprover(){
 }
 
 
-
-/* =====================================
-   접근권한
-===================================== */
+/* =========================================================
+   ACCESS
+========================================================= */
 
 function applyAccess(){
 
@@ -1176,7 +1319,6 @@ function applyAccess(){
       'hidden',
       !approved
     );
-
 
   $('analysisLocked')
     .classList
@@ -1193,7 +1335,6 @@ function applyAccess(){
       !approved
     );
 
-
   $('searchLocked')
     .classList
     .toggle(
@@ -1208,7 +1349,6 @@ function applyAccess(){
       'hidden',
       !approved
     );
-
 
   $('deckLocked')
     .classList
@@ -1242,13 +1382,20 @@ function applyAccess(){
     n.classList.remove('hidden');
 
     n.innerHTML =
-      '<div class="notice">' +
-      '<b>먼저 전투원 등록을 해주세요.</b><br>' +
-      '닉네임과 맹 이름을 입력하면 관리자 승인 대기 상태가 됩니다.' +
-      '</div>';
+      `
+      <div class="notice">
+
+        <b>먼저 전투원 등록을 해주세요.</b>
+
+        <br>
+
+        닉네임과 맹 이름을 등록하면
+        관리자 승인 대기 상태가 됩니다.
+
+      </div>
+      `;
 
   }
-
 
   else if(
     profile.status === 'pending'
@@ -1257,16 +1404,26 @@ function applyAccess(){
     n.classList.remove('hidden');
 
     n.innerHTML =
-      '<div class="notice">' +
-      '<b>⏳ 승인 대기 중</b><br>' +
-      esc(profile.nickname) +
-      ' / ' +
-      esc(profile.clan_name || '맹 미등록') +
-      '<br>관리자 승인 후 전투 분석과 덱 조회를 사용할 수 있습니다.' +
-      '</div>';
+      `
+      <div class="notice">
+
+        <b>⏳ 승인 대기 중</b>
+
+        <br>
+
+        ${esc(profile.nickname)}
+        /
+        ${esc(profile.clan_name || '맹 미등록')}
+
+        <br>
+
+        관리자 승인 후
+        전투 분석과 덱 조회를 사용할 수 있습니다.
+
+      </div>
+      `;
 
   }
-
 
   else if(
     profile.status === 'rejected'
@@ -1275,35 +1432,49 @@ function applyAccess(){
     n.classList.remove('hidden');
 
     n.innerHTML =
-      '<div class="deniedBox">' +
-      '<b>승인 거절</b><br>' +
-      '관리자에게 문의해주세요.' +
-      '</div>';
+      `
+      <div class="deniedBox">
+
+        <b>승인 거절</b>
+
+        <br>
+
+        관리자에게 문의해주세요.
+
+      </div>
+      `;
 
   }
-
 
   else{
 
     n.classList.remove('hidden');
 
     n.innerHTML =
-      '<div class="approvedBox">' +
-      '<b>✓ 승인된 전투원</b> · ' +
-      esc(profile.nickname) +
-      ' / ' +
-      esc(profile.clan_name || '맹 미등록') +
-      '</div>';
+      `
+      <div class="approvedBox">
+
+        <b>✓ 승인된 전투원</b>
+
+        ·
+
+        ${esc(profile.nickname)}
+
+        /
+
+        ${esc(profile.clan_name || '맹 미등록')}
+
+      </div>
+      `;
 
   }
 
 }
 
 
-
-/* =====================================
-   익명 사용자
-===================================== */
+/* =========================================================
+   ANONYMOUS USER
+========================================================= */
 
 async function ensureUser(){
 
@@ -1347,10 +1518,9 @@ async function ensureUser(){
 }
 
 
-
-/* =====================================
-   프로필
-===================================== */
+/* =========================================================
+   PROFILE
+========================================================= */
 
 async function loadProfile(){
 
@@ -1398,7 +1568,6 @@ async function loadProfile(){
   applyAccess();
 
 }
-
 
 
 $('saveProfile').onclick =
@@ -1478,11 +1647,21 @@ async () => {
     await db
       .from('profiles')
       .upsert({
-        id:currentUser.id,
+
+        id:
+          currentUser.id,
+
         nickname,
-        clan_name:clan,
-        role:'user',
-        status:'pending'
+
+        clan_name:
+          clan,
+
+        role:
+          'user',
+
+        status:
+          'pending'
+
       });
 
 
@@ -1509,10 +1688,9 @@ async () => {
 };
 
 
-
-/* =====================================
-   이미지
-===================================== */
+/* =========================================================
+   IMAGE
+========================================================= */
 
 $('file').onchange =
 e => {
@@ -1557,10 +1735,11 @@ e => {
 };
 
 
-
 function resetAnalysis(){
 
   imageData = null;
+
+  lastStructuredAnalysis = null;
 
   $('file').value = '';
 
@@ -1577,6 +1756,8 @@ function resetAnalysis(){
     .classList
     .add('hidden');
 
+  $('structuredPreview').innerHTML = '';
+
   progress(
     0,
     '대기 중'
@@ -1585,11 +1766,206 @@ function resetAnalysis(){
 }
 
 
+/* =========================================================
+   STRUCTURED DECK
+========================================================= */
 
-/* =====================================
-   AI 분석
-   ★ 기존 /api/analyze 그대로 유지
-===================================== */
+function renderHero(
+  hero,
+  index
+){
+
+  if(!hero)
+    return '';
+
+
+  return `
+    <div class="heroUnit">
+
+      <div class="heroNo">
+        ${index + 1}
+      </div>
+
+      <div class="heroName">
+        ${esc(hero.name || '확인 불가')}
+      </div>
+
+      <div class="heroLevel">
+        Lv.${esc(hero.level ?? '?')}
+      </div>
+
+      <div class="heroPromotion">
+
+        🔴 승급
+        ${esc(
+          hero.promotion == null
+            ? '?'
+            : hero.promotion
+        )}
+
+      </div>
+
+      <div class="heroTroops">
+
+        ${
+          hero.troops_current != null &&
+          hero.troops_max != null
+
+          ?
+
+          `
+          ${Number(
+            hero.troops_current
+          ).toLocaleString()}
+
+          /
+
+          ${Number(
+            hero.troops_max
+          ).toLocaleString()}
+          `
+
+          :
+
+          '병력 확인 불가'
+        }
+
+      </div>
+
+    </div>
+  `;
+
+}
+
+
+function renderDeckPanel(
+  title,
+  side,
+  data
+){
+
+  const deck =
+    Array.isArray(data?.deck)
+      ? data.deck
+      : [];
+
+
+  return `
+    <div class="deckPanel">
+
+      <div class="
+        deckPanelTitle
+        ${side}
+      ">
+
+        ${title}
+
+        <span style="
+          float:right;
+          color:#87939e;
+          font-weight:700;
+        ">
+
+          ${esc(
+            data?.player ||
+            '상대 미입력'
+          )}
+
+        </span>
+
+      </div>
+
+
+      <div class="heroGrid">
+
+        ${
+          deck.length
+
+          ?
+
+          deck
+            .slice(0,5)
+            .map(
+              (h,i) =>
+                renderHero(h,i)
+            )
+            .join('')
+
+          :
+
+          `
+          <div class="empty"
+            style="grid-column:1/-1">
+
+            확인된 무장 정보가 없습니다.
+
+          </div>
+          `
+        }
+
+      </div>
+
+    </div>
+  `;
+
+}
+
+
+function renderStructuredPreview(
+  structured
+){
+
+  if(!structured)
+    return;
+
+
+  const a =
+    structured.attacker || {};
+
+  const d =
+    structured.defender || {};
+
+
+  $('structuredPreview').innerHTML = `
+
+    <div
+      style="
+        font-size:15px;
+        font-weight:900;
+        margin-bottom:10px;
+      ">
+
+      ⚔ 판독된 실제 덱
+
+    </div>
+
+
+    ${renderDeckPanel(
+      '⚔ 공격측 덱',
+      'attack',
+      a
+    )}
+
+
+    <div class="vs">
+      VS
+    </div>
+
+
+    ${renderDeckPanel(
+      '🛡 방어측 덱',
+      'defense',
+      d
+    )}
+
+  `;
+
+}
+
+
+/* =========================================================
+   AI ANALYSIS
+========================================================= */
 
 $('run').onclick =
 async () => {
@@ -1635,6 +2011,7 @@ async () => {
       await fetch(
         '/api/analyze',
         {
+
           method:'POST',
 
           headers:{
@@ -1710,8 +2087,71 @@ async () => {
     }
 
 
+    /*
+      ★ 핵심
+      Gemini 구조화 결과 저장
+    */
+
+    lastStructuredAnalysis =
+      j.structured || null;
+
+
     $('result').value =
       result;
+
+
+    /*
+      AI가 읽은 상대 정보 자동 입력
+    */
+
+    if(
+      lastStructuredAnalysis?.defender
+    ){
+
+      $('opponentName').value =
+        lastStructuredAnalysis
+          .defender
+          .player || '';
+
+      $('opponentClan').value =
+        lastStructuredAnalysis
+          .defender
+          .clan || '';
+
+    }
+
+
+    /*
+      승패 자동 입력
+    */
+
+    if(
+      lastStructuredAnalysis?.battle_result
+    ){
+
+      const value =
+        lastStructuredAnalysis
+          .battle_result;
+
+      if(
+        [
+          '승리',
+          '패배',
+          '확인 불가'
+        ].includes(value)
+      ){
+
+        $('battleResult').value =
+          value;
+
+      }
+
+    }
+
+
+    renderStructuredPreview(
+      lastStructuredAnalysis
+    );
 
 
     $('resultCard')
@@ -1752,10 +2192,9 @@ async () => {
 };
 
 
-
-/* =====================================
-   전투 저장
-===================================== */
+/* =========================================================
+   SAVE BATTLE
+========================================================= */
 
 $('save').onclick =
 async () => {
@@ -1784,6 +2223,44 @@ async () => {
   }
 
 
+  const structured =
+    lastStructuredAnalysis || {};
+
+
+  const attacker =
+    structured.attacker || null;
+
+
+  const defender =
+    structured.defender || null;
+
+
+  const detectedOpponent =
+    defender?.player ||
+    $('opponentName')
+      .value
+      .trim() ||
+    null;
+
+
+  const detectedOpponentClan =
+    defender?.clan ||
+    $('opponentClan')
+      .value
+      .trim() ||
+    null;
+
+
+  const detectedResult =
+    structured.battle_result ||
+    $('battleResult').value;
+
+
+  /*
+    ★ attacker / defender를
+    JSONB로 저장
+  */
+
   const r =
     await db
       .from('battles')
@@ -1793,17 +2270,23 @@ async () => {
           currentUser.id,
 
         result:
-          $('battleResult').value,
+          detectedResult,
 
         opponent_name:
-          $('opponentName')
-            .value
-            .trim() || null,
+          detectedOpponent,
 
         opponent_clan_name:
-          $('opponentClan')
-            .value
-            .trim() || null,
+          detectedOpponentClan,
+
+        attacker:
+          attacker,
+
+        defender:
+          defender,
+
+        key_stats:
+          structured.key_stats ||
+          null,
 
         ai_analysis:
           text,
@@ -1814,7 +2297,8 @@ async () => {
         memo:
           $('memo')
             .value
-            .trim() || null
+            .trim() ||
+          null
 
       });
 
@@ -1833,7 +2317,7 @@ async () => {
 
   msg(
     'saveMsg',
-    '전투 기록을 저장했습니다.'
+    '✓ 전투 기록을 저장했습니다.'
   );
 
 
@@ -1842,10 +2326,9 @@ async () => {
 };
 
 
-
-/* =====================================
-   프로필 목록
-===================================== */
+/* =========================================================
+   PROFILES FOR BATTLES
+========================================================= */
 
 async function profilesFor(bs){
 
@@ -1853,7 +2336,9 @@ async function profilesFor(bs){
     [
       ...new Set(
         bs
-          .map(b => b.user_id)
+          .map(
+            b => b.user_id
+          )
           .filter(Boolean)
       )
     ];
@@ -1885,86 +2370,212 @@ async function profilesFor(bs){
 }
 
 
+/* =========================================================
+   BATTLE CARD
+========================================================= */
 
-/* =====================================
-   전투 기록 HTML
-===================================== */
-
-function recordHTML(
+function battleCardHTML(
   b,
   p
 ){
 
+  const attacker =
+    b.attacker || {};
+
+  const defender =
+    b.defender || {};
+
+
+  const attackDeck =
+    Array.isArray(
+      attacker.deck
+    )
+      ? attacker.deck
+      : [];
+
+
+  const defenseDeck =
+    Array.isArray(
+      defender.deck
+    )
+      ? defender.deck
+      : [];
+
+
   return `
 
-    <div class="record">
+    <div class="battleCard">
 
-      <div class="recordhead">
+      <div class="battleTop">
 
         <div>
 
-          <span class="gold">
+          <div class="battleResult">
+
             ${esc(
               b.result ||
               '확인 불가'
             )}
-          </span>
 
-          <span class="tag">
+          </div>
+
+
+          <div class="battlePlayers">
+
             ${esc(
+              attacker.player ||
               p?.nickname ||
-              '익명'
+              '토리아빠'
             )}
-          </span>
 
-          <span class="tag">
+            <span
+              style="color:#66727e">
+              /
+            </span>
+
             ${esc(
+              attacker.clan ||
               p?.clan_name ||
               '맹 미등록'
             )}
-          </span>
+
+            <span
+              style="color:#66727e">
+              VS
+            </span>
+
+            ${esc(
+              defender.player ||
+              b.opponent_name ||
+              '상대 미입력'
+            )}
+
+            ${
+              defender.clan
+              ?
+
+              `
+              <span
+                style="color:#66727e">
+                /
+              </span>
+
+              ${esc(defender.clan)}
+              `
+
+              :
+
+              ''
+            }
+
+          </div>
 
         </div>
 
-        <span class="meta">
+
+        <div class="battleDate">
+
           ${new Date(
             b.created_at
-          ).toLocaleString('ko-KR')}
-        </span>
+          ).toLocaleString(
+            'ko-KR'
+          )}
+
+        </div>
 
       </div>
 
 
-      <div style="margin-top:8px">
+      <div class="battleDeckArea">
 
-        상대
+        ${
+          attackDeck.length
 
-        <span class="tag">
-          ${esc(
-            b.opponent_name ||
-            '미입력'
-          )}
-        </span>
+          ?
 
-        <span class="tag">
-          ${esc(
-            b.opponent_clan_name ||
-            '맹 미입력'
-          )}
-        </span>
+          renderDeckPanel(
+            '⚔ 공격측 덱',
+            'attack',
+            attacker
+          )
+
+          :
+
+          ''
+        }
+
+
+        ${
+          attackDeck.length &&
+          defenseDeck.length
+
+          ?
+
+          `<div class="vs">VS</div>`
+
+          :
+
+          ''
+        }
+
+
+        ${
+          defenseDeck.length
+
+          ?
+
+          renderDeckPanel(
+            '🛡 방어측 덱',
+            'defense',
+            defender
+          )
+
+          :
+
+          ''
+        }
+
+
+        ${
+          !attackDeck.length &&
+          !defenseDeck.length
+
+          ?
+
+          `
+          <div class="empty">
+
+            구조화된 덱 정보가 없는
+            기존 전투 기록입니다.
+
+          </div>
+          `
+
+          :
+
+          ''
+        }
 
       </div>
 
 
       <details>
 
-        <summary>
-          전투 보고서 보기
+        <summary
+          style="
+            cursor:pointer;
+            padding:13px 17px;
+            color:#929da8;
+            font-size:12px;
+            border-top:1px solid #293540;
+          ">
+
+          ▶ 자세히 보기
+
         </summary>
 
-        <div
-          class="result"
-          style="margin-top:10px">
+
+        <div class="detailBox">
 
           ${esc(
             b.final_text ||
@@ -1983,7 +2594,6 @@ function recordHTML(
 }
 
 
-
 async function renderBattles(
   bs,
   target
@@ -1992,7 +2602,11 @@ async function renderBattles(
   if(!bs.length){
 
     $(target).innerHTML =
-      '<div class="empty">검색 결과가 없습니다.</div>';
+      `
+      <div class="empty">
+        검색 결과가 없습니다.
+      </div>
+      `;
 
     return;
 
@@ -2007,9 +2621,11 @@ async function renderBattles(
     bs
       .map(
         b =>
-          recordHTML(
+          battleCardHTML(
             b,
-            pm.get(b.user_id)
+            pm.get(
+              b.user_id
+            )
           )
       )
       .join('');
@@ -2017,10 +2633,9 @@ async function renderBattles(
 }
 
 
-
-/* =====================================
-   전투 검색
-===================================== */
+/* =========================================================
+   SEARCH BATTLES
+========================================================= */
 
 async function searchBattles(){
 
@@ -2065,7 +2680,9 @@ async function searchBattles(){
 
   const ids =
     (u.data || [])
-      .map(x => x.id);
+      .map(
+        x => x.id
+      );
 
 
   let a = [];
@@ -2121,10 +2738,11 @@ async function searchBattles(){
     ...(q2.data || [])
   ]
     .forEach(
-      b => map.set(
-        b.id,
-        b
-      )
+      b =>
+        map.set(
+          b.id,
+          b
+        )
     );
 
 
@@ -2143,7 +2761,6 @@ async function searchBattles(){
   );
 
 }
-
 
 
 async function loadAll(){
@@ -2176,7 +2793,7 @@ async function loadAll(){
   }
 
 
-  renderBattles(
+  await renderBattles(
     r.data || [],
     'searchResults'
   );
@@ -2184,10 +2801,9 @@ async function loadAll(){
 }
 
 
-
-/* =====================================
-   내 전투
-===================================== */
+/* =========================================================
+   MY BATTLES
+========================================================= */
 
 async function loadMine(){
 
@@ -2197,9 +2813,11 @@ async function loadMine(){
   ){
 
     $('myBattles').innerHTML =
-      '<div class="empty">' +
-      '승인 후 내 전투 기록이 표시됩니다.' +
-      '</div>';
+      `
+      <div class="empty">
+        승인 후 내 전투 기록이 표시됩니다.
+      </div>
+      `;
 
     return;
 
@@ -2226,16 +2844,18 @@ async function loadMine(){
   if(r.error){
 
     $('myBattles').innerHTML =
-      '<div class="message error">' +
-      esc(r.error.message) +
-      '</div>';
+      `
+      <div class="message error">
+        ${esc(r.error.message)}
+      </div>
+      `;
 
     return;
 
   }
 
 
-  renderBattles(
+  await renderBattles(
     r.data || [],
     'myBattles'
   );
@@ -2243,622 +2863,176 @@ async function loadMine(){
 }
 
 
-
-/* ==========================================================
-   🛡 덱 조회 시스템
-========================================================== */
-
-
-/*
-  AI 결과에서 장수 정보를 추출한다.
-
-  지원 예시:
-
-  공격측
-  1. 여포 50,000
-  2. 장료 45,000
-  3. 관우 42,000
-
-  또는
-
-  공격측: 여포 / 장료 / 관우 / 조운 / 마초
-
-  또는
-
-  [공격측]
-  여포
-  장료
-  관우
-
-*/
-
-
-function normalizeHeroName(name){
-
-  return name
-    .replace(
-      /^[0-9]+\s*[.)\-:]\s*/,
-      ''
-    )
-    .replace(
-      /^\[[^\]]+\]\s*/,
-      ''
-    )
-    .trim();
-
-}
-
-
-
-function parseDeckText(
-  text,
-  targetSide
-){
-
-  if(!text)
-    return [];
-
-
-  const lines =
-    text
-      .split(/\r?\n/)
-      .map(
-        x => x.trim()
-      )
-      .filter(Boolean);
-
-
-  const heroes = [];
-
-
-  let active =
-    false;
-
-
-  for(let i=0;i<lines.length;i++){
-
-    const line =
-      lines[i];
-
-
-    /*
-      섹션 시작
-    */
-
-    if(
-      /공격\s*측|공격군|공격부대|공격\s*진영/i
-        .test(line)
-    ){
-
-      active =
-        targetSide === 'attack';
-
-      continue;
-
-    }
-
-
-    if(
-      /방어\s*측|방어군|방어부대|방어\s*진영/i
-        .test(line)
-    ){
-
-      active =
-        targetSide === 'defense';
-
-      continue;
-
-    }
-
-
-    /*
-      다른 쪽 섹션이 시작되면 종료
-    */
-
-    if(
-      active &&
-      targetSide === 'attack' &&
-      /방어\s*측|방어군|방어부대|방어\s*진영/i
-        .test(line)
-    ){
-
-      active = false;
-
-    }
-
-
-    if(
-      active &&
-      targetSide === 'defense' &&
-      /공격\s*측|공격군|공격부대|공격\s*진영/i
-        .test(line)
-    ){
-
-      active = false;
-
-    }
-
-
-    if(!active)
-      continue;
-
-
-    /*
-      제외할 문장
-    */
-
-    if(
-      /전투력|승리|패배|결과|병력합계|총병력|합계|상대|전투분석|판정/i
-        .test(line)
-    ){
-
-      continue;
-
-    }
-
-
-    /*
-      숫자 + 장수
-
-      예:
-      1. 여포 50,000
-      2. 장료 45,000
-    */
-
-    let m =
-      line.match(
-        /^(?:\d+\s*[.)\-:]\s*)?(.+?)\s+([\d,]+)\s*(?:명|병)?$/
-      );
-
-
-    if(m){
-
-      const name =
-        normalizeHeroName(
-          m[1]
-        );
-
-
-      if(
-        name.length >= 2 &&
-        name.length <= 15
-      ){
-
-        heroes.push({
-
-          name,
-
-          troops:
-            m[2]
-
-        });
-
-        continue;
-
-      }
-
-    }
-
-
-    /*
-      숫자가 없는 장수 이름
-    */
-
-    m =
-      line.match(
-        /^(?:\d+\s*[.)\-:]\s*)?([가-힣A-Za-z0-9]{2,15})$/
-      );
-
-
-    if(m){
-
-      const name =
-        normalizeHeroName(
-          m[1]
-        );
-
-
-      /*
-        일반적인 분석 단어 제외
-      */
-
-      if(
-        !/전투|공격|방어|병력|장수|부대|진형|스킬|승리|패배|확인/.test(name)
-      ){
-
-        heroes.push({
-
-          name,
-
-          troops:null
-
-        });
-
-      }
-
-    }
-
-  }
-
-
-  /*
-    중복 제거
-  */
-
-  const unique = [];
-
-  const seen =
-    new Set();
-
-
-  heroes.forEach(
-    h => {
-
-      const key =
-        h.name.toLowerCase();
-
-
-      if(
-        !seen.has(key)
-      ){
-
-        seen.add(key);
-
-        unique.push(h);
-
-      }
-
-    }
-  );
-
-
-  return unique.slice(
-    0,
-    5
-  );
-
-}
-
-
-
-/*
-  AI 출력이 명확하지 않은 경우를 위한
-  전체 텍스트 기반 보조 파서
-*/
-
-function parseFallbackDeck(
-  text
-){
-
-  if(!text)
-    return [];
-
-
-  const commonHeroes = [
-
-    '여포',
-    '조조',
-    '관우',
-    '장비',
-    '유비',
-    '제갈량',
-    '조운',
-    '마초',
-    '황충',
-    '위연',
-    '장료',
-    '허저',
-    '하후돈',
-    '하후연',
-    '전위',
-    '감녕',
-    '주유',
-    '육손',
-    '손권',
-    '손책',
-    '태사자',
-    '대교',
-    '소교',
-    '사마의',
-    '곽가',
-    '방통',
-    '황월영',
-    '초선',
-    '동탁'
-
-  ];
-
-
-  const found = [];
-
-
-  commonHeroes.forEach(
-    name => {
-
-      if(
-        text.includes(name)
-      ){
-
-        found.push({
-
-          name,
-
-          troops:null
-
-        });
-
-      }
-
-    }
-  );
-
-
-  return found.slice(
-    0,
-    5
-  );
-
-}
-
-
-
-/*
-  한 전투 기록에서
-  공격/방어 덱을 추출
-*/
-
-function extractDecks(
-  battle
-){
-
-  const text =
-    battle.final_text ||
-    battle.ai_analysis ||
-    '';
-
-
-  let attack =
-    parseDeckText(
-      text,
-      'attack'
-    );
-
-
-  let defense =
-    parseDeckText(
-      text,
-      'defense'
-    );
-
-
-  /*
-    AI 결과가 섹션 없이 나왔을 때
-    fallback
-  */
-
-  if(
-    attack.length === 0 &&
-    defense.length === 0
-  ){
-
-    const fallback =
-      parseFallbackDeck(
-        text
-      );
-
-
-    /*
-      사용자 본인 쪽을 특정하기 어려우므로
-      전체 후보 덱으로 표시
-    */
-
-    attack =
-      fallback;
-
-  }
-
-
-  return {
-
-    attack,
-
-    defense,
-
-    raw:text
-
-  };
-
-}
-
-
-
-/*
-  이 전투에서 특정 유저가
-  어느 쪽인지 판단
-*/
-
-function getUserSide(
+/* =========================================================
+   DECK SEARCH
+   ★ 기존 final_text 파싱 안 함
+   ★ battles.attacker / defender 사용
+========================================================= */
+
+function simpleDeckHTML(
+  owner,
   battle,
-  profileMap,
-  targetUserId,
-  targetNickname
+  deck,
+  side
 ){
 
-  const owner =
-    profileMap.get(
-      battle.user_id
-    );
+  const heroes =
+    Array.isArray(deck?.deck)
+      ? deck.deck
+      : [];
 
 
-  const myName =
-    targetNickname ||
-    owner?.nickname ||
-    '';
+  if(!heroes.length)
+    return '';
 
 
-  /*
-    기록 작성자 = 공격측인 경우
-  */
+  const sideText =
+    side === 'attack'
+      ? '⚔ 최근 확인 공격 덱'
+      : '🛡 최근 확인 방어 덱';
 
-  const text =
-    battle.final_text ||
-    battle.ai_analysis ||
-    '';
-
-
-  const attackMatch =
-    text.match(
-      /공격\s*측[\s\S]{0,300}/i
-    );
-
-
-  const defenseMatch =
-    text.match(
-      /방어\s*측[\s\S]{0,300}/i
-    );
-
-
-  if(
-    attackMatch &&
-    attackMatch[0].includes(myName)
-  ){
-
-    return 'attack';
-
-  }
-
-
-  if(
-    defenseMatch &&
-    defenseMatch[0].includes(myName)
-  ){
-
-    return 'defense';
-
-  }
-
-
-  /*
-    기본적으로 전투 기록 작성자는
-    공격측으로 간주
-  */
-
-  if(
-    battle.user_id ===
-    targetUserId
-  ){
-
-    return 'attack';
-
-  }
-
-
-  /*
-    상대 유저이면 방어측
-  */
-
-  if(
-    battle.opponent_name &&
-    targetNickname &&
-    battle.opponent_name
-      .toLowerCase()
-      .includes(
-        targetNickname.toLowerCase()
-      )
-  ){
-
-    return 'defense';
-
-  }
-
-
-  return null;
-
-}
-
-
-
-/* =====================================
-   덱 카드 HTML
-===================================== */
-
-function heroCard(
-  hero,
-  index
-){
 
   return `
 
-    <div class="heroCard">
+    <div class="simpleDeck">
 
-      <div class="heroNumber">
-        ${index + 1}
-      </div>
+      <div class="simpleDeckTop">
 
-      <div class="heroName">
-        ${esc(hero.name)}
-      </div>
+        <div>
 
-      ${
-        hero.troops
-        ?
-        `
-          <div class="heroTroop">
-            ${esc(hero.troops)}명
+          <div class="simpleDeckUser">
+
+            ${esc(
+              owner?.nickname ||
+              deck.player ||
+              '알 수 없음'
+            )}
+
           </div>
-        `
-        :
-        ''
-      }
-
-    </div>
-
-  `;
-
-}
 
 
+          <div class="simpleDeckClan">
 
-function deckSideHTML(
-  title,
-  heroes
-){
+            ${esc(
+              owner?.clan_name ||
+              deck.clan ||
+              ''
+            )}
 
-  if(!heroes.length){
+          </div>
 
-    return `
-
-      <div class="deckSide">
-
-        <div class="deckSideTitle">
-          ${title}
         </div>
 
-        <div class="deckEmpty">
-          확인된 장수 정보가 없습니다.
+
+        <div class="simpleDeckDate">
+
+          ${new Date(
+            battle.created_at
+          ).toLocaleString(
+            'ko-KR'
+          )}
+
         </div>
 
       </div>
 
-    `;
 
-  }
+      <div class="simpleDeckTitle">
 
+        ${sideText}
 
-  return `
+        <span>
 
-    <div class="deckSide">
+          ${esc(
+            battle.result ||
+            '확인 불가'
+          )}
 
-      <div class="deckSideTitle">
-        ${title}
+        </span>
+
       </div>
 
-      <div class="deckGrid">
+
+      <div class="simpleHeroGrid">
 
         ${
           heroes
+            .slice(0,5)
             .map(
-              heroCard
+              (hero,index) => `
+
+                <div class="simpleHero">
+
+                  <div class="simpleHeroNo">
+
+                    ${index + 1}
+
+                  </div>
+
+
+                  <div class="simpleHeroName">
+
+                    ${esc(
+                      hero.name ||
+                      '확인 불가'
+                    )}
+
+                  </div>
+
+
+                  <div class="simpleHeroInfo">
+
+                    Lv.${esc(
+                      hero.level ??
+                      '?'
+                    )}
+
+                  </div>
+
+
+                  <div
+                    class="simpleHeroPromotion">
+
+                    🔴 승급
+                    ${esc(
+                      hero.promotion ??
+                      '?'
+                    )}
+
+                  </div>
+
+
+                  ${
+                    hero.troops_current != null &&
+                    hero.troops_max != null
+
+                    ?
+
+                    `
+                    <div class="simpleHeroTroop">
+
+                      ${Number(
+                        hero.troops_current
+                      ).toLocaleString()}
+
+                      /
+
+                      ${Number(
+                        hero.troops_max
+                      ).toLocaleString()}
+
+                    </div>
+                    `
+
+                    :
+
+                    ''
+
+                  }
+
+                </div>
+
+              `
             )
             .join('')
         }
@@ -2871,117 +3045,6 @@ function deckSideHTML(
 
 }
 
-
-
-/*
-  실제 덱 하나를 출력
-*/
-
-function deckHTML(
-  battle,
-  owner,
-  heroes,
-  side
-){
-
-  const sideName =
-    side === 'attack'
-    ? '⚔ 공격측 덱'
-    : '🛡 방어측 덱';
-
-
-  return `
-
-    <div class="record">
-
-      <div class="deckHeader">
-
-        <div>
-
-          <div class="deckUser">
-            ${esc(
-              owner?.nickname ||
-              '알 수 없음'
-            )}
-          </div>
-
-          <div class="deckClan">
-            ${esc(
-              owner?.clan_name ||
-              '맹 미등록'
-            )}
-          </div>
-
-        </div>
-
-
-        <div>
-
-          <div class="deckDate">
-
-            ${new Date(
-              battle.created_at
-            ).toLocaleString(
-              'ko-KR'
-            )}
-
-          </div>
-
-          <div style="text-align:right;margin-top:5px">
-
-            <span class="tag">
-
-              ${
-                battle.result ||
-                '확인 불가'
-              }
-
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      ${deckSideHTML(
-        sideName,
-        heroes
-      )}
-
-
-      <details class="deckRaw">
-
-        <summary>
-          원본 AI 판독 결과 보기
-        </summary>
-
-        <div
-          class="result"
-          style="margin-top:10px">
-
-          ${esc(
-            battle.final_text ||
-            battle.ai_analysis ||
-            ''
-          )}
-
-        </div>
-
-      </details>
-
-    </div>
-
-  `;
-
-}
-
-
-
-/* =====================================
-   덱 검색
-===================================== */
 
 async function searchDecks(){
 
@@ -3012,10 +3075,6 @@ async function searchDecks(){
   $('deckResults').innerHTML =
     '<div class="small">덱 정보를 검색하는 중...</div>';
 
-
-  /*
-    유저 찾기
-  */
 
   const users =
     await db
@@ -3052,9 +3111,14 @@ async function searchDecks(){
   if(!userList.length){
 
     $('deckResults').innerHTML =
-      '<div class="deckEmpty">' +
-      '해당 닉네임의 승인된 전투원을 찾을 수 없습니다.' +
-      '</div>';
+      `
+      <div class="deckEmpty">
+
+        <b>${esc(keyword)}</b>
+        유저를 찾을 수 없습니다.
+
+      </div>
+      `;
 
     return;
 
@@ -3068,13 +3132,23 @@ async function searchDecks(){
 
 
   /*
-    해당 유저의 전투 기록
+    ★ 해당 유저의 전투기록에서
+    attacker / defender를 직접 읽는다.
   */
 
   const battles =
     await db
       .from('battles')
-      .select('*')
+      .select(
+        `
+        id,
+        user_id,
+        result,
+        attacker,
+        defender,
+        created_at
+        `
+      )
       .in(
         'user_id',
         ids
@@ -3103,137 +3177,121 @@ async function searchDecks(){
     battles.data || [];
 
 
-  if(!battleList.length){
-
-    $('deckResults').innerHTML =
-      '<div class="deckEmpty">' +
-      '아직 확인된 전투 덱이 없습니다.' +
-      '</div>';
-
-    return;
-
-  }
-
-
-  const profileMap =
-    new Map(
-      userList.map(
-        u => [u.id,u]
-      )
-    );
-
-
   let html = '';
 
 
-  battleList.forEach(
-    battle => {
+  /*
+    가장 최신의 구조화된 덱부터 표시
+  */
 
-      const owner =
-        profileMap.get(
+  for(
+    const battle
+    of battleList
+  ){
+
+    const owner =
+      userList.find(
+        u =>
+          u.id ===
           battle.user_id
-        );
+      );
 
 
-      const decks =
-        extractDecks(
-          battle
-        );
+    if(!owner)
+      continue;
 
 
-      const side =
-        getUserSide(
-          battle,
-          profileMap,
-          battle.user_id,
-          owner?.nickname
-        );
+    /*
+      작성자는 기본적으로 공격측.
+      단, AI가 defender.player를
+      같은 유저로 판독한 경우 방어측.
+    */
+
+    let deck = null;
+    let side = null;
 
 
-      /*
-        본인 덱은 우선 해당 방향을 표시
-      */
+    if(
+      battle.attacker?.player ===
+      owner.nickname
+    ){
 
-      if(
-        side === 'defense' &&
-        decks.defense.length
-      ){
+      deck =
+        battle.attacker;
 
-        html +=
-          deckHTML(
-            battle,
-            owner,
-            decks.defense,
-            'defense'
-          );
-
-      }
-
-
-      else if(
-        side === 'attack' &&
-        decks.attack.length
-      ){
-
-        html +=
-          deckHTML(
-            battle,
-            owner,
-            decks.attack,
-            'attack'
-          );
-
-      }
-
-
-      /*
-        방향 판단이 안 되면
-        공격측을 먼저 보여준다.
-      */
-
-      else if(
-        decks.attack.length
-      ){
-
-        html +=
-          deckHTML(
-            battle,
-            owner,
-            decks.attack,
-            'attack'
-          );
-
-      }
-
-
-      else if(
-        decks.defense.length
-      ){
-
-        html +=
-          deckHTML(
-            battle,
-            owner,
-            decks.defense,
-            'defense'
-          );
-
-      }
+      side =
+        'attack';
 
     }
-  );
+
+    else if(
+      battle.defender?.player ===
+      owner.nickname
+    ){
+
+      deck =
+        battle.defender;
+
+      side =
+        'defense';
+
+    }
+
+    else{
+
+      /*
+        전투 기록 작성자이므로
+        공격측을 우선 사용
+      */
+
+      deck =
+        battle.attacker;
+
+      side =
+        'attack';
+
+    }
+
+
+    if(
+      deck &&
+      Array.isArray(deck.deck) &&
+      deck.deck.length
+    ){
+
+      html +=
+        simpleDeckHTML(
+          owner,
+          battle,
+          deck,
+          side
+        );
+
+    }
+
+  }
 
 
   if(!html){
 
     $('deckResults').innerHTML =
-      '<div class="deckEmpty">' +
-      '해당 유저의 전투 기록에서 장수 덱 정보를 찾지 못했습니다.' +
-      '<br><br>' +
-      '<span class="small">' +
-      'AI 판독 결과에 공격측/방어측 장수 정보가 포함되어 있어야 합니다.' +
-      '</span>' +
-      '</div>';
+      `
+      <div class="deckEmpty">
+
+        <b>${esc(keyword)}</b>의
+        구조화된 덱 기록이 없습니다.
+
+        <br><br>
+
+        <span class="small">
+
+          새 전투를 분석하고 저장하면
+          해당 전투부터 자동으로 덱이 기록됩니다.
+
+        </span>
+
+      </div>
+      `;
 
     return;
 
@@ -3245,11 +3303,6 @@ async function searchDecks(){
 
 }
 
-
-
-/*
-  최근 덱 전체
-*/
 
 async function loadRecentDecks(){
 
@@ -3264,7 +3317,16 @@ async function loadRecentDecks(){
   const r =
     await db
       .from('battles')
-      .select('*')
+      .select(
+        `
+        id,
+        user_id,
+        result,
+        attacker,
+        defender,
+        created_at
+        `
+      )
       .order(
         'created_at',
         {
@@ -3292,9 +3354,11 @@ async function loadRecentDecks(){
   if(!battles.length){
 
     $('deckResults').innerHTML =
-      '<div class="deckEmpty">' +
-      '아직 전투 기록이 없습니다.' +
-      '</div>';
+      `
+      <div class="deckEmpty">
+        아직 전투 기록이 없습니다.
+      </div>
+      `;
 
     return;
 
@@ -3319,21 +3383,19 @@ async function loadRecentDecks(){
         );
 
 
-      const decks =
-        extractDecks(
-          battle
-        );
-
-
       if(
-        decks.attack.length
+        battle.attacker &&
+        Array.isArray(
+          battle.attacker.deck
+        ) &&
+        battle.attacker.deck.length
       ){
 
         html +=
-          deckHTML(
-            battle,
+          simpleDeckHTML(
             owner,
-            decks.attack,
+            battle,
+            battle.attacker,
             'attack'
           );
 
@@ -3346,9 +3408,11 @@ async function loadRecentDecks(){
   if(!html){
 
     $('deckResults').innerHTML =
-      '<div class="deckEmpty">' +
-      '최근 전투에서 확인 가능한 덱을 찾지 못했습니다.' +
-      '</div>';
+      `
+      <div class="deckEmpty">
+        구조화된 덱 기록이 없습니다.
+      </div>
+      `;
 
     return;
 
@@ -3361,10 +3425,9 @@ async function loadRecentDecks(){
 }
 
 
-
-/* =====================================
-   승인 관리
-===================================== */
+/* =========================================================
+   APPROVALS
+========================================================= */
 
 async function loadApprovals(){
 
@@ -3389,9 +3452,11 @@ async function loadApprovals(){
   if(r.error){
 
     $('pendingList').innerHTML =
-      '<div class="message error">' +
-      esc(r.error.message) +
-      '</div>';
+      `
+      <div class="message error">
+        ${esc(r.error.message)}
+      </div>
+      `;
 
     return;
 
@@ -3411,15 +3476,18 @@ async function loadApprovals(){
 
   $('pendingCount')
     .textContent =
-      pending.length + '명';
+      pending.length +
+      '명';
 
 
   if(!pending.length){
 
     $('pendingList').innerHTML =
-      '<div class="empty">' +
-      '현재 승인 대기자가 없습니다.' +
-      '</div>';
+      `
+      <div class="empty">
+        현재 승인 대기자가 없습니다.
+      </div>
+      `;
 
   }
 
@@ -3428,10 +3496,11 @@ async function loadApprovals(){
     $('pendingList').innerHTML =
       pending
         .map(
-          p => memberHTML(
-            p,
-            true
-          )
+          p =>
+            memberHTML(
+              p,
+              true
+            )
         )
         .join('');
 
@@ -3440,6 +3509,7 @@ async function loadApprovals(){
 
   $('approverList').innerHTML =
     '<div class="small">현재 권한자</div>' +
+
     rows
       .filter(
         p =>
@@ -3456,7 +3526,6 @@ async function loadApprovals(){
       .join('');
 
 }
-
 
 
 function memberHTML(
@@ -3477,11 +3546,18 @@ function memberHTML(
             '닉네임 미입력'
           )}
 
-          <span class="pill ${esc(p.status)}">
-            ${esc(p.status)}
+          <span class="pill ${esc(
+            p.status
+          )}">
+
+            ${esc(
+              p.status
+            )}
+
           </span>
 
         </div>
+
 
         <div class="small">
 
@@ -3512,18 +3588,23 @@ function memberHTML(
 
           `
 
-            <button
-              data-action="approve"
-              data-id="${p.id}">
-              ✓ 수락
-            </button>
+          <button
+            data-action="approve"
+            data-id="${p.id}">
 
-            <button
-              class="danger"
-              data-action="reject"
-              data-id="${p.id}">
-              거절
-            </button>
+            ✓ 수락
+
+          </button>
+
+
+          <button
+            class="danger"
+            data-action="reject"
+            data-id="${p.id}">
+
+            거절
+
+          </button>
 
           `
 
@@ -3531,9 +3612,13 @@ function memberHTML(
 
           `
 
-            <span class="pill">
-              ${esc(p.role)}
-            </span>
+          <span class="pill">
+
+            ${esc(
+              p.role
+            )}
+
+          </span>
 
           `
         }
@@ -3545,7 +3630,6 @@ function memberHTML(
   `;
 
 }
-
 
 
 async function changeStatus(
@@ -3586,7 +3670,6 @@ async function changeStatus(
 }
 
 
-
 $('approvalCard')
   .addEventListener(
     'click',
@@ -3604,7 +3687,8 @@ $('approvalCard')
 
       changeStatus(
         b.dataset.id,
-        b.dataset.action === 'approve'
+        b.dataset.action ===
+          'approve'
           ? 'approved'
           : 'rejected'
       );
@@ -3613,10 +3697,9 @@ $('approvalCard')
   );
 
 
-
-/* =====================================
-   이벤트
-===================================== */
+/* =========================================================
+   EVENTS
+========================================================= */
 
 $('refreshApprovals')
   .onclick =
@@ -3633,7 +3716,9 @@ $('search')
     'keydown',
     e => {
 
-      if(e.key === 'Enter')
+      if(
+        e.key === 'Enter'
+      )
         searchBattles();
 
     }
@@ -3643,7 +3728,6 @@ $('search')
 $('allBtn')
   .onclick =
   loadAll;
-
 
 
 $('deckSearchBtn')
@@ -3656,7 +3740,9 @@ $('deckSearch')
     'keydown',
     e => {
 
-      if(e.key === 'Enter')
+      if(
+        e.key === 'Enter'
+      )
         searchDecks();
 
     }
@@ -3668,30 +3754,47 @@ $('recentDeckBtn')
   loadRecentDecks;
 
 
-
-$('goAnalysis')
-  .onclick =
-  () =>
-    $('analysis')
-      .scrollIntoView({
-        behavior:'smooth'
-      });
-
-
+/*
+  ★ 메인 오른쪽 버튼
+  확실하게 덱/유저검색으로 이동
+*/
 
 $('goDeck')
   .onclick =
-  () =>
+  () => {
+
     $('deckCard')
       .scrollIntoView({
-        behavior:'smooth'
+        behavior:'smooth',
+        block:'start'
       });
 
+    setTimeout(
+      () => {
+        $('deckSearch').focus();
+      },
+      500
+    );
+
+  };
 
 
-/* =====================================
-   초기화
-===================================== */
+$('goAnalysis')
+  .onclick =
+  () => {
+
+    $('analysis')
+      .scrollIntoView({
+        behavior:'smooth',
+        block:'start'
+      });
+
+  };
+
+
+/* =========================================================
+   INIT
+========================================================= */
 
 (async()=>{
 
@@ -3707,7 +3810,9 @@ $('goDeck')
   applyAccess();
 
 
-  if(isApprover()){
+  if(
+    isApprover()
+  ){
 
     await loadApprovals();
 
@@ -3717,8 +3822,6 @@ $('goDeck')
   await loadMine();
 
 })();
-
-
 </script>
 
 </body>
