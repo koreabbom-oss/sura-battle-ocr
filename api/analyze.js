@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     // ----------------------------------------
     // Gemini 모델
     // ----------------------------------------
-    const model = "gemini-3.7-flash";
+    const model = "gemini-3.6-flash";
 
     const apiUrl =
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
