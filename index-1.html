@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수라 전투부대</title>
+<style>
+body{margin:0;background:#080b10;color:#eee;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+main{max-width:760px;margin:auto;padding:24px 16px 60px}.card{background:#111821;border:1px solid #303a48;border-radius:22px;padding:20px;margin:18px 0}
+h1{font-size:30px}h2{margin-top:0}button{border:0;border-radius:14px;padding:15px 20px;font-size:17px;font-weight:700;background:#d6ae59;color:#111;margin:5px}
+button.secondary{background:#263446;color:white}input,textarea{width:100%;box-sizing:border-box;background:#070b10;color:#eee;border:1px solid #344050;border-radius:12px;padding:14px;font-size:16px}
+img{max-width:100%;max-height:400px;display:block;margin:15px auto;border-radius:14px}.progress{height:12px;background:#263446;border-radius:20px;overflow:hidden}.bar{height:100%;width:0;background:#d6ae59;transition:.25s}.status{color:#d6ae59;font-weight:700;margin:10px 0}
+</style></head><body><main>
+<h1>수라 전투부대</h1><div>스크린샷 → AI 전체 화면 판독 → 검토 → 저장</div>
+<section class="card"><h2>① 사진 선택</h2><input id="file" type="file" accept="image/*"><img id="preview" hidden>
+<button id="run">화면 판독 시작</button><button class="secondary" onclick="location.reload()">초기화</button>
+<div class="progress"><div id="bar" class="bar"></div></div><div id="status" class="status">대기 중</div></section>
+<section class="card"><h2>② 판독 결과</h2><textarea id="result" rows="28" placeholder="판독 결과가 여기에 표시됩니다."></textarea>
+<button id="save">검토 내용 저장</button></section>
+<section class="card"><h2>③ 전투 구분</h2>
+<label><input type="radio" name="type" value="승리" checked> 승리</label>
+<label><input type="radio" name="type" value="멸망"> 멸망</label></section>
+</main>
+<script>
+const $=x=>document.getElementById(x);let data=null;
+$("file").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{data=r.result;$("preview").src=data;$("preview").hidden=false;$("status").textContent="사진 준비 완료"};r.readAsDataURL(f)};
+function p(n,t){$("bar").style.width=n+"%";$("status").textContent=n+"% · "+t}
+$("run").onclick=async()=>{if(!data)return alert("스크린샷을 먼저 선택하세요.");
+try{p(10,"이미지 준비 중");p(30,"AI에 전체 화면 전달 중");
+let r=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:data})});
+let j=await r.json();if(!r.ok)throw Error(j.error||"서버 오류");p(85,"전투 정보 정리 중");$("result").value=j.text||"";p(100,"판독 완료")
+}catch(e){p(0,"오류");alert(e.message)}};
+$("save").onclick=()=>{let t=$("result").value.trim();if(!t)return alert("결과가 없습니다.");
+let k="sura-records",a=JSON.parse(localStorage.getItem(k)||"[]");a.push({type:document.querySelector("[name=type]:checked").value,text:t,time:new Date().toISOString()});localStorage.setItem(k,JSON.stringify(a));alert("저장했습니다.")};
+</script></body></html>
