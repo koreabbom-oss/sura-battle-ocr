@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>수라 전투부대</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
+*{box-sizing:border-box}
+
 body{
   margin:0;
   background:#080b10;
@@ -15,9 +18,9 @@ body{
 }
 
 main{
-  max-width:760px;
+  max-width:900px;
   margin:auto;
-  padding:24px 16px 60px
+  padding:24px 16px 70px
 }
 
 .card{
@@ -29,7 +32,8 @@ main{
 }
 
 h1{
-  font-size:30px
+  font-size:30px;
+  margin:0 0 8px
 }
 
 h2{
@@ -39,36 +43,65 @@ h2{
 button{
   border:0;
   border-radius:14px;
-  padding:15px 20px;
-  font-size:17px;
+  padding:13px 18px;
+  font-size:16px;
   font-weight:700;
   background:#d6ae59;
   color:#111;
-  margin:5px
+  margin:4px;
+  cursor:pointer
 }
 
 button.secondary{
   background:#263446;
-  color:white
+  color:#fff
 }
 
-input,textarea{
+input,
+textarea,
+select{
   width:100%;
   box-sizing:border-box;
   background:#070b10;
   color:#eee;
   border:1px solid #344050;
   border-radius:12px;
-  padding:14px;
-  font-size:16px
+  padding:13px;
+  font-size:16px;
+  margin:5px 0 10px
 }
 
-img{
-  max-width:100%;
-  max-height:400px;
-  display:block;
-  margin:15px auto;
-  border-radius:14px
+textarea{
+  min-height:280px;
+  resize:vertical
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px
+}
+
+@media(max-width:650px){
+  .row{
+    grid-template-columns:1fr
+  }
+}
+
+.hidden{
+  display:none!important
+}
+
+.small{
+  color:#9ba7b6;
+  font-size:13px;
+  line-height:1.5
+}
+
+.status{
+  color:#d6ae59;
+  font-weight:700;
+  margin:10px 0
 }
 
 .progress{
@@ -85,23 +118,69 @@ img{
   transition:.25s
 }
 
-.status{
-  color:#d6ae59;
-  font-weight:700;
-  margin:10px 0
+img{
+  max-width:100%;
+  max-height:430px;
+  display:block;
+  margin:15px auto;
+  border-radius:14px
 }
 
-#errorBox{
-  display:none;
+.result-item{
+  border:1px solid #303a48;
+  border-radius:14px;
+  padding:14px;
+  margin:10px 0;
+  background:#0b1118
+}
+
+.result-item b{
+  color:#d6ae59
+}
+
+.pill{
+  display:inline-block;
+  background:#263446;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+  margin:2px
+}
+
+.error{
   white-space:pre-wrap;
-  word-break:break-word;
   background:#180d0d;
   border:1px solid #7d3333;
   color:#ffb5b5;
-  padding:15px;
-  border-radius:12px;
-  margin-top:15px;
-  line-height:1.5
+  padding:14px;
+  border-radius:12px
+}
+
+.success{
+  white-space:pre-wrap;
+  background:#0d1913;
+  border:1px solid #315d43;
+  color:#aee5c2;
+  padding:14px;
+  border-radius:12px
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px
+}
+
+th,
+td{
+  padding:10px 7px;
+  border-bottom:1px solid #303a48;
+  text-align:left;
+  vertical-align:top
+}
+
+th{
+  color:#d6ae59
 }
 </style>
 </head>
@@ -113,181 +192,876 @@ img{
 <h1>수라 전투부대</h1>
 
 <div>
-스크린샷 → AI 전체 화면 판독 → 검토 → 저장
+스크린샷 → AI 전체 화면 판독 → 검토 → 저장 → 검색
 </div>
 
-<section class="card">
 
-<h2>① 사진 선택</h2>
+<!-- ========================= -->
+<!-- 로그인 -->
+<!-- ========================= -->
 
-<input id="file" type="file" accept="image/*">
+<section class="card" id="authCard">
 
-<img id="preview" hidden>
+<h2>① 로그인 / 회원가입</h2>
+
+<div class="row">
+
+<div>
+<label>이메일</label>
+<input
+  id="email"
+  type="email"
+  placeholder="이메일">
+</div>
+
+<div>
+<label>비밀번호</label>
+<input
+  id="password"
+  type="password"
+  placeholder="6자 이상">
+</div>
+
+</div>
+
+<button id="signup">
+회원가입
+</button>
+
+<button class="secondary" id="login">
+로그인
+</button>
+
+<div id="authMsg" class="small"></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- 유저 정보 -->
+<!-- ========================= -->
+
+<section class="card hidden" id="profileCard">
+
+<h2>내 정보</h2>
+
+<div class="row">
+
+<div>
+
+<label>내 닉네임</label>
+
+<input
+  id="nickname"
+  placeholder="게임 닉네임">
+
+</div>
+
+
+<div>
+
+<label>내 맹 이름</label>
+
+<input
+  id="clanName"
+  placeholder="맹 이름">
+
+</div>
+
+</div>
+
+
+<button id="saveProfile">
+내 정보 저장
+</button>
+
+<button
+  class="secondary"
+  id="logout">
+로그아웃
+</button>
+
+<div id="profileMsg"></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- 검색 -->
+<!-- ========================= -->
+
+<section
+  class="card hidden"
+  id="searchCard">
+
+<h2>
+② 유저 / 맹 / 전투 검색
+</h2>
+
+<input
+  id="search"
+  placeholder="유저 닉네임 / 맹 이름 / 상대 이름 검색">
+
+<button id="searchBtn">
+검색
+</button>
+
+<button
+  class="secondary"
+  id="allBtn">
+전체 보기
+</button>
+
+<div id="searchResults"></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- AI 분석 -->
+<!-- ========================= -->
+
+<section
+  class="card hidden"
+  id="analysisCard">
+
+<h2>
+③ 사진 선택
+</h2>
+
+<input
+  id="file"
+  type="file"
+  accept="image/*">
+
+<img
+  id="preview"
+  hidden>
 
 <button id="run">
 화면 판독 시작
 </button>
 
 <button
-class="secondary"
-onclick="location.reload()">
+  class="secondary"
+  onclick="location.reload()">
 초기화
 </button>
 
 <div class="progress">
-<div id="bar" class="bar"></div>
+
+<div
+  id="bar"
+  class="bar">
 </div>
 
-<div id="status" class="status">
+</div>
+
+<div
+  id="status"
+  class="status">
 대기 중
 </div>
 
-<div id="errorBox"></div>
+<div
+  id="errorBox"
+  class="error hidden">
+</div>
 
 </section>
 
 
-<section class="card">
 
-<h2>② 판독 결과</h2>
+<!-- ========================= -->
+<!-- 분석 결과 -->
+<!-- ========================= -->
+
+<section
+  class="card hidden"
+  id="resultCard">
+
+<h2>
+④ 판독 결과 검토
+</h2>
+
+
+<div class="row">
+
+<div>
+
+<label>
+전투 결과
+</label>
+
+<select id="battleResult">
+
+<option value="승리">
+승리
+</option>
+
+<option value="패배">
+패배
+</option>
+
+<option value="확인 불가">
+확인 불가
+</option>
+
+</select>
+
+</div>
+
+
+<div>
+
+<label>
+상대 유저 / 닉네임
+</label>
+
+<input
+  id="opponentName"
+  placeholder="예: 마위">
+
+</div>
+
+</div>
+
+
+<label>
+상대 맹 이름
+</label>
+
+<input
+  id="opponentClan"
+  placeholder="예: 수라">
+
+
+<label>
+AI 판독 결과
+</label>
 
 <textarea
-id="result"
-rows="28"
-placeholder="판독 결과가 여기에 표시됩니다.">
-</textarea>
+  id="result"
+  placeholder="판독 결과가 여기에 표시됩니다."></textarea>
+
+
+<label>
+메모
+</label>
+
+<textarea
+  id="memo"
+  style="min-height:100px"
+  placeholder="추가 메모"></textarea>
+
 
 <button id="save">
-검토 내용 저장
+DB에 전투 기록 저장
 </button>
 
+<div id="saveMsg"></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- 내 기록 -->
+<!-- ========================= -->
+
+<section
+  class="card hidden"
+  id="myBattlesCard">
+
+<h2>
+⑤ 내 전투 기록
+</h2>
+
+<button id="refreshMine">
+새로고침
+</button>
+
+<div id="myBattles"></div>
+
 </section>
 
 
-<section class="card">
 
-<h2>③ 전투 구분</h2>
+<!-- ========================= -->
+<!-- 관리자 -->
+<!-- ========================= -->
+
+<section
+  class="card hidden"
+  id="adminCard">
+
+<h2>
+⑥ 관리자
+</h2>
+
+<div class="small">
+관리자 권한이 있는 계정에서만 표시됩니다.
+</div>
+
+
+<div class="row">
+
+<div>
 
 <label>
-<input
-type="radio"
-name="type"
-value="승리"
-checked>
-승리
+유저 / 맹 검색
 </label>
 
-<label>
 <input
-type="radio"
-name="type"
-value="멸망">
-멸망
+  id="adminUserSearch"
+  placeholder="닉네임 또는 맹 이름">
+
+</div>
+
+
+<div>
+
+<label>
+상대 검색
 </label>
+
+<input
+  id="adminBattleSearch"
+  placeholder="상대 유저 또는 상대 맹">
+
+</div>
+
+</div>
+
+
+<button id="adminSearch">
+검색
+</button>
+
+<button
+  class="secondary"
+  id="adminAll">
+전체 기록
+</button>
+
+
+<div id="adminResults"></div>
 
 </section>
+
 
 </main>
 
 
 <script>
 
-const $ = x => document.getElementById(x);
+/* =========================================
+   SUPABASE
+========================================= */
 
-let data = null;
+const SUPABASE_URL =
+"https://wwztnwyhsxvumsnaifgd.supabase.co";
 
+const SUPABASE_KEY =
+"sb_publishable_JSjLC_CYnQkbsj6aLZv2Pw_CCPyNt0-";
 
-/* ----------------------------------
-   이미지 선택
----------------------------------- */
-
-$("file").onchange = e => {
-
-  const f = e.target.files[0];
-
-  if (!f) return;
-
-  const r = new FileReader();
-
-  r.onload = () => {
-
-    data = r.result;
-
-    $("preview").src = data;
-
-    $("preview").hidden = false;
-
-    $("status").textContent =
-      "사진 준비 완료";
-
-    $("errorBox").style.display =
-      "none";
-  };
-
-  r.readAsDataURL(f);
-};
+const db =
+window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 
-/* ----------------------------------
+/* =========================================
+   전역 변수
+========================================= */
+
+let imageData = null;
+
+let currentUser = null;
+
+let currentProfile = null;
+
+
+/* =========================================
+   편의 함수
+========================================= */
+
+const $ =
+id => document.getElementById(id);
+
+
+function show(id, yes=true){
+
+  $(id).classList.toggle(
+    "hidden",
+    !yes
+  );
+
+}
+
+
+function msg(
+  id,
+  text,
+  type=""
+){
+
+  $(id).className = type;
+
+  $(id).textContent = text;
+
+}
+
+
+/* =========================================
    진행률
----------------------------------- */
+========================================= */
 
-function p(n, t){
+function p(n,t){
 
   $("bar").style.width =
     n + "%";
 
   $("status").textContent =
     n + "% · " + t;
+
 }
 
 
-/* ----------------------------------
-   오류 표시
----------------------------------- */
+/* =========================================
+   세션 확인
+========================================= */
 
-function showError(message){
+async function loadSession(){
 
-  $("errorBox").textContent =
-    message;
+  const {
+    data:{session}
+  } =
+  await db.auth.getSession();
 
-  $("errorBox").style.display =
-    "block";
+
+  if(session){
+
+    await setUser(
+      session.user
+    );
+
+  }else{
+
+    resetUser();
+
+  }
+
 }
 
 
-/* ----------------------------------
+/* =========================================
+   로그인 상태
+========================================= */
+
+async function setUser(user){
+
+  currentUser = user;
+
+
+  show("authCard",false);
+
+  show("profileCard");
+
+  show("searchCard");
+
+  show("analysisCard");
+
+  show("resultCard");
+
+  show("myBattlesCard");
+
+
+  /*
+   프로필 가져오기
+  */
+
+  const {
+    data:profile
+  } =
+  await db
+    .from("profiles")
+    .select("*")
+    .eq("id",user.id)
+    .maybeSingle();
+
+
+  currentProfile =
+    profile;
+
+
+  if(profile){
+
+    $("nickname").value =
+      profile.nickname || "";
+
+    $("clanName").value =
+      profile.clan_name || "";
+
+
+    /*
+     관리자
+    */
+
+    if(profile.role === "admin"){
+
+      show("adminCard");
+
+      await loadAdmin();
+
+    }
+
+  }
+
+
+  await loadMine();
+
+}
+
+
+/* =========================================
+   로그아웃 상태
+========================================= */
+
+function resetUser(){
+
+  currentUser = null;
+
+  currentProfile = null;
+
+
+  show("authCard");
+
+  [
+    "profileCard",
+    "searchCard",
+    "analysisCard",
+    "resultCard",
+    "myBattlesCard",
+    "adminCard"
+  ].forEach(
+    id => show(id,false)
+  );
+
+}
+
+
+/* =========================================
+   회원가입
+========================================= */
+
+$("signup").onclick =
+async()=>{
+
+  const email =
+    $("email").value.trim();
+
+  const password =
+    $("password").value;
+
+
+  if(!email || !password){
+
+    return msg(
+      "authMsg",
+      "이메일과 비밀번호를 입력하세요.",
+      "error"
+    );
+
+  }
+
+
+  if(password.length < 6){
+
+    return msg(
+      "authMsg",
+      "비밀번호는 6자 이상이어야 합니다.",
+      "error"
+    );
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+  await db.auth.signUp({
+
+    email,
+
+    password
+
+  });
+
+
+  if(error){
+
+    return msg(
+      "authMsg",
+      error.message,
+      "error"
+    );
+
+  }
+
+
+  if(data.session){
+
+    await setUser(
+      data.user
+    );
+
+    msg(
+      "authMsg",
+      "회원가입 완료",
+      "success"
+    );
+
+  }else{
+
+    msg(
+      "authMsg",
+      "회원가입 완료. 이메일 인증이 필요한 경우 메일을 확인하세요.",
+      "success"
+    );
+
+  }
+
+};
+
+
+/* =========================================
+   로그인
+========================================= */
+
+$("login").onclick =
+async()=>{
+
+  const email =
+    $("email").value.trim();
+
+  const password =
+    $("password").value;
+
+
+  const {
+    data,
+    error
+  } =
+  await db.auth.signInWithPassword({
+
+    email,
+
+    password
+
+  });
+
+
+  if(error){
+
+    return msg(
+      "authMsg",
+      error.message,
+      "error"
+    );
+
+  }
+
+
+  await setUser(
+    data.user
+  );
+
+
+  msg(
+    "authMsg",
+    "로그인 완료",
+    "success"
+  );
+
+};
+
+
+/* =========================================
+   로그아웃
+========================================= */
+
+$("logout").onclick =
+async()=>{
+
+  await db.auth.signOut();
+
+  location.reload();
+
+};
+
+
+/* =========================================
+   프로필 저장
+========================================= */
+
+$("saveProfile").onclick =
+async()=>{
+
+  if(!currentUser)
+    return;
+
+
+  const nickname =
+    $("nickname").value.trim();
+
+  const clan_name =
+    $("clanName").value.trim();
+
+
+  if(!nickname){
+
+    return msg(
+      "profileMsg",
+      "닉네임을 입력하세요.",
+      "error"
+    );
+
+  }
+
+
+  const {
+    error
+  } =
+  await db
+    .from("profiles")
+    .upsert({
+
+      id:currentUser.id,
+
+      nickname:nickname,
+
+      clan_name:clan_name
+
+    });
+
+
+  if(error){
+
+    return msg(
+      "profileMsg",
+      error.message,
+      "error"
+    );
+
+  }
+
+
+  currentProfile = {
+
+    ...(currentProfile || {}),
+
+    nickname,
+
+    clan_name
+
+  };
+
+
+  msg(
+    "profileMsg",
+    "저장했습니다.",
+    "success"
+  );
+
+};
+
+
+/* =========================================
+   사진 선택
+========================================= */
+
+$("file").onchange =
+e=>{
+
+  const f =
+    e.target.files[0];
+
+
+  if(!f)
+    return;
+
+
+  const r =
+    new FileReader();
+
+
+  r.onload = ()=>{
+
+    imageData =
+      r.result;
+
+
+    $("preview").src =
+      imageData;
+
+
+    $("preview").hidden =
+      false;
+
+
+    p(
+      0,
+      "사진 준비 완료"
+    );
+
+  };
+
+
+  r.readAsDataURL(f);
+
+};
+
+
+/* =========================================
    AI 분석
----------------------------------- */
+   중요:
+   현재 정상 작동하는 /api/analyze
+   그대로 사용
+========================================= */
 
-$("run").onclick = async () => {
+$("run").onclick =
+async()=>{
 
-  if (!data){
+  if(!imageData){
 
-    alert(
+    return alert(
       "스크린샷을 먼저 선택하세요."
     );
 
-    return;
   }
 
-  $("errorBox").style.display =
-    "none";
+
+  $("errorBox")
+    .classList
+    .add("hidden");
+
 
   $("result").value = "";
 
-  try {
+
+  try{
 
     p(
       10,
       "이미지 준비 중"
     );
 
-
-    /*
-      data:image/jpeg;base64,...
-      형태 그대로 서버에 전달
-    */
 
     p(
       30,
@@ -299,6 +1073,7 @@ $("run").onclick = async () => {
       await fetch(
         "/api/analyze",
         {
+
           method:"POST",
 
           headers:{
@@ -306,113 +1081,78 @@ $("run").onclick = async () => {
               "application/json"
           },
 
-          body:JSON.stringify({
+          body:
+            JSON.stringify({
 
-            image:data,
+              image:imageData,
 
-            mimeType:
-              data.startsWith(
-                "data:image/png"
-              )
-              ? "image/png"
-              : "image/jpeg"
+              mimeType:
+                imageData.startsWith(
+                  "data:image/png"
+                )
+                ? "image/png"
+                : "image/jpeg"
 
-          })
+            })
+
         }
       );
 
 
-    /*
-      서버 응답을 일단 TEXT로 받는다.
-      JSON이 아니어도 실제 오류 내용을
-      확인할 수 있게 하기 위함.
-    */
-
-    const responseText =
+    const text =
       await response.text();
 
 
     let j;
 
+
     try{
 
       j =
-        JSON.parse(
-          responseText
-        );
+        JSON.parse(text);
 
     }catch(e){
 
       throw new Error(
-        "서버가 JSON이 아닌 응답을 보냈습니다.\n\n" +
-        "HTTP 상태: " +
-        response.status +
-        "\n\n" +
-        responseText.substring(
-          0,
-          2000
-        )
+        "서버가 JSON이 아닌 응답을 보냈습니다.\n"+
+        "HTTP "+response.status+
+        "\n\n"+
+        text.slice(0,2000)
       );
+
     }
 
-
-    /* ----------------------------------
-       서버 오류
-    ---------------------------------- */
 
     if(!response.ok){
 
-      const message =
+      throw new Error(
 
-        "Gemini API 오류\n\n" +
-
-        "HTTP 코드: " +
-        (
-          j.code ||
-          response.status ||
-          "알 수 없음"
-        ) +
-
-        "\n\n상태: " +
-        (
-          j.status ||
-          "알 수 없음"
-        ) +
-
-        "\n\n상세 내용:\n" +
-        (
-          j.detail ||
-          j.error ||
-          "상세 오류가 없습니다."
-        ) +
-
+        "Gemini API 오류\n\n"+
+        "HTTP 코드: "+
+        (j.code || response.status)+
+        "\n\n"+
+        "상태: "+
+        (j.status || "알 수 없음")+
+        "\n\n"+
+        "상세 내용:\n"+
+        (j.detail || j.error ||
+          "알 수 없는 오류")+
         (
           j.model
-          ? "\n\n사용 모델: " +
-            j.model
+          ? "\n\n사용 모델: "+j.model
           : ""
-        );
+        )
 
-      throw new Error(
-        message
       );
+
     }
 
-
-    /* ----------------------------------
-       정상 응답
-    ---------------------------------- */
 
     p(
       85,
       "전투 정보 정리 중"
     );
 
-
-    /*
-      analyze.js에서는
-      result라는 이름으로 결과를 보냄
-    */
 
     const result =
       j.result ||
@@ -423,18 +1163,19 @@ $("run").onclick = async () => {
     if(!result){
 
       throw new Error(
-        "Gemini가 분석 결과를 반환하지 않았습니다.\n\n" +
-        JSON.stringify(
-          j,
-          null,
-          2
-        )
+        "Gemini가 분석 결과를 반환하지 않았습니다."
       );
+
     }
 
 
     $("result").value =
       result;
+
+
+    show(
+      "resultCard"
+    );
 
 
     p(
@@ -451,72 +1192,730 @@ $("run").onclick = async () => {
     );
 
 
-    showError(
+    $("errorBox").textContent =
       e.message ||
-      String(e)
-    );
+      String(e);
+
+
+    $("errorBox")
+      .classList
+      .remove("hidden");
 
   }
 
 };
 
 
-/* ----------------------------------
-   저장
----------------------------------- */
+/* =========================================
+   전투 저장
+========================================= */
 
-$("save").onclick = () => {
+$("save").onclick =
+async()=>{
 
-  const t =
+  if(!currentUser){
+
+    return alert(
+      "먼저 로그인하세요."
+    );
+
+  }
+
+
+  const text =
     $("result").value.trim();
 
-  if(!t){
 
-    alert(
-      "결과가 없습니다."
+  if(!text){
+
+    return alert(
+      "판독 결과가 없습니다."
     );
 
-    return;
   }
 
 
-  const k =
-    "sura-records";
+  const {
+    error
+  } =
+  await db
+    .from("battles")
+    .insert({
+
+      user_id:
+        currentUser.id,
+
+      result:
+        $("battleResult").value,
+
+      opponent_name:
+        $("opponentName")
+          .value
+          .trim() || null,
+
+      opponent_clan_name:
+        $("opponentClan")
+          .value
+          .trim() || null,
+
+      ai_analysis:
+        text,
+
+      final_text:
+        text,
+
+      memo:
+        $("memo")
+          .value
+          .trim() || null
+
+    });
 
 
-  const a =
-    JSON.parse(
-      localStorage.getItem(k) ||
-      "[]"
+  if(error){
+
+    return msg(
+      "saveMsg",
+      "저장 실패: "+
+      error.message,
+      "error"
+    );
+
+  }
+
+
+  msg(
+    "saveMsg",
+    "전투 기록을 DB에 저장했습니다.",
+    "success"
+  );
+
+
+  await loadMine();
+
+};
+
+
+/* =========================================
+   HTML 보안 처리
+========================================= */
+
+function escapeHtml(s){
+
+  return String(
+    s ?? ""
+  ).replace(
+    /[&<>"']/g,
+    c=>({
+
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+
+    }[c])
+  );
+
+}
+
+
+/* =========================================
+   내 전투 기록
+========================================= */
+
+async function loadMine(){
+
+  if(!currentUser)
+    return;
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("battles")
+    .select("*")
+    .eq(
+      "user_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {ascending:false}
+    )
+    .limit(100);
+
+
+  if(error){
+
+    $("myBattles")
+      .textContent =
+      error.message;
+
+    return;
+
+  }
+
+
+  if(!data.length){
+
+    $("myBattles")
+      .innerHTML =
+      "아직 저장된 전투가 없습니다.";
+
+    return;
+
+  }
+
+
+  $("myBattles").innerHTML =
+    data
+      .map(
+        battleHTML
+      )
+      .join("");
+
+}
+
+
+function battleHTML(b){
+
+  const d =
+    new Date(
+      b.created_at
+    ).toLocaleString(
+      "ko-KR"
     );
 
 
-  a.push({
+  return `
 
-    type:
-      document.querySelector(
-        "[name=type]:checked"
-      ).value,
+  <div class="result-item">
 
-    text:t,
+    <b>
+      ${escapeHtml(
+        b.result ||
+        "확인 불가"
+      )}
+    </b>
 
-    time:
-      new Date().toISOString()
+    <span class="pill">
+      ${escapeHtml(
+        b.opponent_name ||
+        "상대 미입력"
+      )}
+    </span>
 
-  });
+    <span class="pill">
+      ${escapeHtml(
+        b.opponent_clan_name ||
+        "맹 미입력"
+      )}
+    </span>
+
+    <div class="small">
+      ${d}
+    </div>
+
+    <details>
+
+      <summary>
+        판독 결과 보기
+      </summary>
+
+      <pre
+        style="white-space:pre-wrap"
+      >${escapeHtml(
+        b.final_text ||
+        b.ai_analysis ||
+        ""
+      )}</pre>
+
+    </details>
+
+  </div>
+
+  `;
+
+}
 
 
-  localStorage.setItem(
-    k,
-    JSON.stringify(a)
-  );
+$("refreshMine").onclick =
+loadMine;
 
 
-  alert(
-    "저장했습니다."
-  );
+/* =========================================
+   유저 / 맹 / 상대 검색
+========================================= */
+
+async function searchPublic(){
+
+  const q =
+    $("search")
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("battles")
+    .select(`
+      *,
+      profiles!battles_user_id_fkey(
+        nickname,
+        clan_name
+      )
+    `)
+    .order(
+      "created_at",
+      {ascending:false}
+    )
+    .limit(500);
+
+
+  if(error){
+
+    $("searchResults")
+      .textContent =
+      error.message;
+
+    return;
+
+  }
+
+
+  let filtered =
+    data;
+
+
+  if(q){
+
+    filtered =
+      data.filter(
+        b=>{
+
+          const owner =
+            b.profiles || {};
+
+
+          return [
+
+            owner.nickname,
+
+            owner.clan_name,
+
+            b.opponent_name,
+
+            b.opponent_clan_name
+
+          ].some(
+            v=>
+              String(v || "")
+                .toLowerCase()
+                .includes(q)
+          );
+
+        }
+      );
+
+  }
+
+
+  if(!filtered.length){
+
+    $("searchResults")
+      .innerHTML =
+      "검색 결과가 없습니다.";
+
+    return;
+
+  }
+
+
+  $("searchResults")
+    .innerHTML =
+    filtered
+      .map(
+        publicBattleHTML
+      )
+      .join("");
+
+}
+
+
+function publicBattleHTML(b){
+
+  const owner =
+    b.profiles || {};
+
+
+  return `
+
+  <div class="result-item">
+
+    <b>
+      ${escapeHtml(
+        owner.nickname ||
+        "익명"
+      )}
+    </b>
+
+    <span class="pill">
+      ${escapeHtml(
+        owner.clan_name ||
+        "맹 미입력"
+      )}
+    </span>
+
+    →
+
+    <b>
+      ${escapeHtml(
+        b.result ||
+        "확인 불가"
+      )}
+    </b>
+
+    <span class="pill">
+      상대:
+      ${escapeHtml(
+        b.opponent_name ||
+        "-"
+      )}
+    </span>
+
+    <span class="pill">
+      ${escapeHtml(
+        b.opponent_clan_name ||
+        "-"
+      )}
+    </span>
+
+    <div class="small">
+
+      ${new Date(
+        b.created_at
+      ).toLocaleString(
+        "ko-KR"
+      )}
+
+    </div>
+
+
+    <details>
+
+      <summary>
+        상세
+      </summary>
+
+      <pre
+        style="white-space:pre-wrap"
+      >${escapeHtml(
+        b.final_text ||
+        ""
+      )}</pre>
+
+    </details>
+
+  </div>
+
+  `;
+
+}
+
+
+$("searchBtn").onclick =
+searchPublic;
+
+
+$("allBtn").onclick =
+()=>{
+
+  $("search").value = "";
+
+  searchPublic();
 
 };
+
+
+/* =========================================
+   관리자
+========================================= */
+
+async function loadAdmin(){
+
+  if(
+    !currentProfile ||
+    currentProfile.role !== "admin"
+  )
+    return;
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("profiles")
+    .select("*")
+    .order(
+      "created_at",
+      {ascending:false}
+    );
+
+
+  if(error){
+
+    $("adminResults")
+      .textContent =
+      error.message;
+
+    return;
+
+  }
+
+
+  $("adminResults").innerHTML = `
+
+    <h3>
+      유저 ${data.length}명
+    </h3>
+
+    <table>
+
+      <tr>
+
+        <th>
+          닉네임
+        </th>
+
+        <th>
+          맹
+        </th>
+
+        <th>
+          권한
+        </th>
+
+        <th>
+          가입일
+        </th>
+
+      </tr>
+
+      ${
+        data.map(
+          p=>`
+
+          <tr>
+
+            <td>
+              ${escapeHtml(
+                p.nickname || "-"
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                p.clan_name || "-"
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                p.role
+              )}
+            </td>
+
+            <td>
+              ${new Date(
+                p.created_at
+              ).toLocaleDateString(
+                "ko-KR"
+              )}
+            </td>
+
+          </tr>
+
+          `
+        ).join("")
+      }
+
+    </table>
+
+  `;
+
+}
+
+
+$("adminSearch").onclick =
+async()=>{
+
+  if(
+    !currentProfile ||
+    currentProfile.role !== "admin"
+  )
+    return;
+
+
+  const uq =
+    $("adminUserSearch")
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  const bq =
+    $("adminBattleSearch")
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("battles")
+    .select(`
+      *,
+      profiles!battles_user_id_fkey(
+        nickname,
+        clan_name
+      )
+    `)
+    .order(
+      "created_at",
+      {ascending:false}
+    )
+    .limit(500);
+
+
+  if(error){
+
+    $("adminResults")
+      .textContent =
+      error.message;
+
+    return;
+
+  }
+
+
+  const filtered =
+    data.filter(
+      b=>{
+
+        const p =
+          b.profiles || {};
+
+
+        const userOK =
+          !uq ||
+
+          [
+            p.nickname,
+            p.clan_name
+
+          ].some(
+            v=>
+              String(v || "")
+                .toLowerCase()
+                .includes(uq)
+          );
+
+
+        const battleOK =
+          !bq ||
+
+          [
+            b.opponent_name,
+            b.opponent_clan_name
+
+          ].some(
+            v=>
+              String(v || "")
+                .toLowerCase()
+                .includes(bq)
+          );
+
+
+        return (
+          userOK &&
+          battleOK
+        );
+
+      }
+    );
+
+
+  $("adminResults").innerHTML =
+    filtered.length
+
+    ? filtered
+        .map(
+          publicBattleHTML
+        )
+        .join("")
+
+    : "검색 결과가 없습니다.";
+
+};
+
+
+$("adminAll").onclick =
+async()=>{
+
+  $("adminUserSearch")
+    .value = "";
+
+  $("adminBattleSearch")
+    .value = "";
+
+  $("adminSearch")
+    .click();
+
+};
+
+
+/* =========================================
+   로그인 상태 변화
+========================================= */
+
+db.auth.onAuthStateChange(
+  async(
+    event,
+    session
+  )=>{
+
+    if(session){
+
+      await setUser(
+        session.user
+      );
+
+    }else{
+
+      resetUser();
+
+    }
+
+  }
+);
+
+
+/* =========================================
+   시작
+========================================= */
+
+loadSession();
 
 </script>
 
