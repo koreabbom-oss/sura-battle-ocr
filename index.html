@@ -3293,10 +3293,9 @@ function authEmailFromNickname(nickname){
   return `member-${encoded || 'user'}@sura-battle.local`;
 }
 
-// 화면에서 사용하는 코드는 0815 그대로 유지하되,
-// Supabase Auth의 최소 비밀번호 길이(6자)를 만족하도록 내부 비밀번호만 변환합니다.
+// 로그인/가입 코드는 260815를 그대로 Supabase Auth 비밀번호로 사용합니다.
 function authPasswordFromCode(code){
-  return code === '0815' ? 'sura-0815-battle' : code;
+  return code;
 }
 
 async function getMyProfile(){
@@ -3416,8 +3415,8 @@ async function signupWithNickname(){
     return;
   }
 
-  // 신규 회원가입은 공통 가입 코드 0815가 있어야 신청할 수 있습니다.
-  if(code !== '0815'){
+  // 신규 회원가입은 공통 가입 코드 260815가 있어야 신청할 수 있습니다.
+  if(code !== '260815'){
     showAuthMessage('가입 코드가 올바르지 않습니다.');
     return;
   }
