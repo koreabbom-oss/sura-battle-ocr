@@ -65,6 +65,25 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
   justify-content:center;
 }
 
+
+.quick{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+
+@media(max-width:900px){
+  .quick{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media(max-width:560px){
+  .quick{
+    grid-template-columns:1fr !important;
+  }
+}
+
 /* Active navigation: ONLY the current page is gold */
 .quick .navBtn:not(.active){
   background:#182636 !important;
@@ -423,7 +442,8 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 <div class="quick">
 <button id="btnRegister" class="navBtn">⚔ 전황 등록</button>
 <button id="btnSearch" class="secondary navBtn">⌕ 유저 / 덱 검색</button>
-<button id="btnStats" class="secondary navBtn">📊 전체 통계</button>
+<button id="btnStats" class="secondary navBtn">📊 장수 통계</button>
+<button id="btnUserStats" class="secondary navBtn">👤 유저 통계</button>
 </div>
 
 <div id="loginCard" class="card hidden">
@@ -497,11 +517,55 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
      GLOBAL STATISTICS PAGE
 ========================= -->
 
+
+<!-- =========================
+     USER STATISTICS PAGE
+========================= -->
+
+<section id="userStatsPage" class="card hidden">
+
+  <div class="title">
+    <i></i>
+    <h2>유저 통계</h2>
+  </div>
+
+  <div class="sub">
+    등록된 전투 데이터를 기준으로 유저별 승률을 계산합니다.
+  </div>
+
+  <div class="notice">
+    ※ '주의해야하는 상대 유저 TOP 20'은 전황 등록에서 맹 이름이 '수라', '수라맹', '수라전투부대', '수라 전투부대'로 등록된 유저를 제외하고 계산합니다.
+    ※ 별도의 수라 전투부대 유저 명단을 입력할 필요가 없습니다.
+  </div>
+
+  <div class="statsColumns">
+
+    <div class="statsPanel">
+      <h3>⚠️ 주의해야하는 상대 유저 TOP 20</h3>
+
+      <div id="outsideUserRanking" class="topList"></div>
+
+      <div id="outsideUserMoreWrap" class="topMoreWrap"></div>
+    </div>
+
+    <div class="statsPanel">
+      <h3>🛡️ 수라 전투부대 승률 TOP 20</h3>
+
+      <div id="suraUserRanking" class="topList"></div>
+
+      <div id="suraUserMoreWrap" class="topMoreWrap"></div>
+    </div>
+
+  </div>
+
+</section>
+
+
 <section id="statsPage" class="card hidden">
 
   <div class="title">
     <i></i>
-    <h2>전체 통계</h2>
+    <h2>장수 통계</h2>
   </div>
 
   <div class="sub">
@@ -876,6 +940,283 @@ function setActiveNav(id){
     active.classList.add('active');
   }
 }
+
+
+/* =========================================================
+   USER STATISTICS
+========================================================= */
+
+/*
+  수라 전투부대 여부는 별도의 유저 명단을 입력하지 않습니다.
+
+  전황 등록에서 맹 이름이 아래 중 하나이면 자동으로
+  '수라 전투부대' 소속으로 판단합니다.
+
+    수라
+    수라맹
+    수라전투부대
+    수라 전투부대
+
+  공백/대소문자 차이는 무시합니다.
+*/
+
+const SURA_CLAN_NAMES = new Set([
+  '수라',
+  '수라맹',
+  '수라전투부대'
+]);
+
+function normalizeClanName(name){
+  return String(name || '')
+    .trim()
+    .replace(/\s+/g,'')
+    .toLowerCase();
+}
+
+function isSuraClan(clan){
+  return SURA_CLAN_NAMES.has(
+    normalizeClanName(clan)
+  );
+}
+
+
+function collectUserStats(battles){
+
+  const map = new Map();
+
+  for(const battle of battles){
+
+    for(const side of [battle.attacker,battle.defender]){
+
+      if(!side) continue;
+
+      const player =
+        String(side.player || '').trim();
+
+      if(!player) continue;
+
+      if(!map.has(player)){
+        map.set(player,{
+          player,
+          clan:String(side.clan || '').trim(),
+          total:0,
+          wins:0,
+          losses:0,
+          draws:0,
+          suraBattleCount:0,
+          outsideBattleCount:0,
+          suraClanSeen:false,
+          outsideClanSeen:false
+        });
+      }
+
+      const stat = map.get(player);
+      const clan = String(side.clan || '').trim();
+      const sura = isSuraClan(clan);
+
+      stat.total++;
+
+      if(battle.result === '무승부'){
+        stat.draws++;
+      }else if(
+        (side === battle.attacker && battle.result === '승리') ||
+        (side === battle.defender && battle.result === '패배')
+      ){
+        stat.wins++;
+      }else{
+        stat.losses++;
+      }
+
+      if(sura){
+        stat.suraBattleCount++;
+        stat.suraClanSeen = true;
+      }else{
+        stat.outsideBattleCount++;
+        stat.outsideClanSeen = true;
+      }
+
+      // Keep the most recently encountered clan value.
+      if(clan){
+        stat.clan = clan;
+      }
+    }
+  }
+
+  return map;
+}
+
+function userWinRate(stat){
+
+  const decided =
+    stat.wins +
+    stat.losses;
+
+  return decided > 0
+    ? (stat.wins / decided) * 100
+    : 0;
+}
+
+
+function renderUserRankList(list, visible){
+
+  return list
+    .slice(0,visible)
+    .map((stat,i)=>{
+
+      const rankClass =
+        i === 0 ? 'rank1' :
+        i === 1 ? 'rank2' :
+        i === 2 ? 'rank3' : '';
+
+      const badge =
+        i === 0 ? '🥇' :
+        i === 1 ? '🥈' :
+        i === 2 ? '🥉' :
+        (i + 1);
+
+      return `
+        <div class="rankItem ${rankClass}">
+
+          <div class="rankBadge">
+            ${badge}
+          </div>
+
+          <div class="rankTitle">
+            ${esc(stat.player)}
+          </div>
+
+          <div class="rankMeta">
+            ${stat.total}전 ·
+            ${stat.wins}승
+            ${stat.losses}패
+            ${stat.draws ? ` · ${stat.draws}무` : ''}
+            ${stat.clan ? ` · ${esc(stat.clan)}` : ''}
+          </div>
+
+          <div class="rankValue">
+            ${formatPct(userWinRate(stat))}
+          </div>
+
+        </div>
+      `;
+
+    })
+    .join('');
+}
+
+
+function renderUserStatsPage(){
+
+  const battles =
+    window.__allBattlesForUserStats || [];
+
+  const map =
+    collectUserStats(battles);
+
+  const all =
+    [...map.values()]
+      .filter(stat => stat.total > 0)
+      .sort(
+        (a,b)=>
+          userWinRate(b) -
+          userWinRate(a) ||
+          b.total-a.total
+      );
+
+  const sura =
+    all
+      .filter(
+        stat =>
+          stat.suraClanSeen
+      )
+      .slice(0,20);
+
+  const outside =
+    all
+      .filter(
+        stat =>
+          !stat.suraClanSeen
+      )
+      .slice(0,20);
+
+  window.__userRankingData = {
+    outside,
+    sura
+  };
+
+  window.__userRankingVisible = {
+    outside:5,
+    sura:5
+  };
+
+  const outsideEl =
+    $('outsideUserRanking');
+
+  const suraEl =
+    $('suraUserRanking');
+
+  outsideEl.innerHTML =
+    outside.length
+      ? renderUserRankList(outside,5)
+      : `<div class="empty">
+           외부 유저 데이터가 없습니다.
+         </div>`;
+
+  suraEl.innerHTML =
+    sura.length
+      ? renderUserRankList(sura,5)
+      : `<div class="empty">
+           맹 이름이 '수라', '수라맹', '수라전투부대', '수라 전투부대'인 전투 데이터가 없습니다.
+         </div>`;
+
+  $('outsideUserMoreWrap').innerHTML =
+    outside.length > 5
+      ? `<button class="secondary userRankMoreBtn"
+           data-user-more="outside">
+           더보기 · 5개
+         </button>`
+      : '';
+
+  $('suraUserMoreWrap').innerHTML =
+    sura.length > 5
+      ? `<button class="secondary userRankMoreBtn"
+           data-user-more="sura">
+           더보기 · 5개
+         </button>`
+      : '';
+}
+
+
+async function loadUserStats(){
+
+  $('outsideUserRanking').innerHTML = '';
+  $('suraUserRanking').innerHTML = '';
+
+  try{
+
+    const battles =
+      await loadBattles();
+
+    window.__allBattlesForUserStats =
+      battles;
+
+    renderUserStatsPage();
+
+  }catch(error){
+
+    const message = `
+      <div class="err">
+        유저 통계 불러오기 실패:
+        ${esc(error.message || error)}
+      </div>
+    `;
+
+    $('outsideUserRanking').innerHTML = message;
+    $('suraUserRanking').innerHTML = message;
+
+  }
+}
+
 
 function normalizeHeroName(name){
   return String(name || '').trim();
@@ -1599,6 +1940,56 @@ async function loadGlobalStats(){
 
 
 
+
+document.addEventListener('click',function(e){
+
+  const btn =
+    e.target.closest('.userRankMoreBtn');
+
+  if(!btn) return;
+
+  const type =
+    btn.dataset.userMore;
+
+  const data =
+    window.__userRankingData;
+
+  const visible =
+    window.__userRankingVisible;
+
+  if(!data || !visible) return;
+
+  visible[type] += 5;
+
+  const list =
+    data[type];
+
+  const target =
+    type === 'outside'
+      ? $('outsideUserRanking')
+      : $('suraUserRanking');
+
+  const wrap =
+    type === 'outside'
+      ? $('outsideUserMoreWrap')
+      : $('suraUserMoreWrap');
+
+  target.innerHTML =
+    renderUserRankList(
+      list,
+      visible[type]
+    );
+
+  wrap.innerHTML =
+    visible[type] < list.length
+      ? `<button class="secondary userRankMoreBtn"
+           data-user-more="${type}">
+           더보기 · 5개
+         </button>`
+      : '';
+
+});
+
 document.addEventListener('click',function(e){
 
   const btn = e.target.closest('.globalRankMoreBtn');
@@ -1780,12 +2171,14 @@ $('btnRegister').onclick=()=>{
   $('registerPage').classList.remove('hidden');
   $('searchPage').classList.add('hidden');
   $('statsPage').classList.add('hidden');
+  $('userStatsPage').classList.add('hidden');
   setActiveNav('btnRegister');
 };
 $('btnSearch').onclick=()=>{
   $('searchPage').classList.remove('hidden');
   $('registerPage').classList.add('hidden');
   $('statsPage').classList.add('hidden');
+  $('userStatsPage').classList.add('hidden');
   setActiveNav('btnSearch');
 };
 
@@ -1793,8 +2186,18 @@ $('btnStats').onclick=()=>{
   $('statsPage').classList.remove('hidden');
   $('registerPage').classList.add('hidden');
   $('searchPage').classList.add('hidden');
+  $('userStatsPage').classList.add('hidden');
   setActiveNav('btnStats');
   loadGlobalStats();
+};
+
+$('btnUserStats').onclick=()=>{
+  $('userStatsPage').classList.remove('hidden');
+  $('registerPage').classList.add('hidden');
+  $('searchPage').classList.add('hidden');
+  $('statsPage').classList.add('hidden');
+  setActiveNav('btnUserStats');
+  loadUserStats();
 };
 $('saveBattle').onclick=saveBattle;
 $('resetBattle').onclick=()=>resetBattle();
