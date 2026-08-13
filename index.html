@@ -84,6 +84,62 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
   }
 }
 
+
+.clanUserGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.clanUserCard{
+  border:1px solid #2c3944;
+  border-radius:12px;
+  background:#10171e;
+  padding:14px;
+  cursor:pointer;
+  transition:.15s ease;
+}
+
+.clanUserCard:hover{
+  border-color:#d8ae54;
+  transform:translateY(-1px);
+}
+
+.clanUserTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.clanUserTop strong{
+  font-size:16px;
+}
+
+.clanUserTop span{
+  color:#e4c263;
+  font-weight:900;
+}
+
+.clanUserMeta{
+  margin-top:9px;
+  font-size:12px;
+  color:#c8d2d9;
+}
+
+.clanUserHint{
+  margin-top:9px;
+  font-size:10px;
+  color:#71808c;
+}
+
+@media(max-width:760px){
+  .clanUserGrid{
+    grid-template-columns:1fr;
+  }
+}
+
 /* Active navigation: ONLY the current page is gold */
 .quick .navBtn:not(.active){
   background:#182636 !important;
@@ -878,39 +934,281 @@ return r.data||[];
 }
 
 async function search(){
-const nickname=$('searchUser').value.trim();
-const clan=$('searchClan').value.trim();
-$('searchMsg').innerHTML='';
-$('deckResults').innerHTML='';
-$('battleResults').innerHTML='';
-if(!nickname){
-$('searchMsg').innerHTML='<div class="err">닉네임을 입력해주세요.</div>';
-return;
+
+  const nickname =
+    $('searchUser').value.trim();
+
+  const clan =
+    $('searchClan').value.trim();
+
+  $('searchMsg').innerHTML='';
+  $('deckResults').innerHTML='';
+  $('battleResults').innerHTML='';
+
+  if(!nickname && !clan){
+    $('searchMsg').innerHTML =
+      '<div class="err">닉네임 또는 맹 이름을 입력해주세요.</div>';
+    return;
+  }
+
+  try{
+
+    const battles =
+      await loadBattles();
+
+    /*
+      맹 이름만 입력한 경우:
+      해당 맹에 등록된 모든 유저를 모아서 보여줍니다.
+    */
+    if(!nickname && clan){
+
+      const userMap = new Map();
+
+      for(const battle of battles){
+
+        for(const side of [
+          battle.attacker,
+          battle.defender
+        ]){
+
+          if(!side) continue;
+
+          const player =
+            String(side.player || '').trim();
+
+          const sideClan =
+            String(side.clan || '').trim();
+
+          if(!player) continue;
+
+          if(
+            normalizeClanName(sideClan) !==
+            normalizeClanName(clan)
+          ){
+            continue;
+          }
+
+          if(!userMap.has(player)){
+            userMap.set(player,{
+              player,
+              clan:sideClan,
+              total:0,
+              wins:0,
+              losses:0,
+              draws:0
+            });
+          }
+
+          const stat =
+            userMap.get(player);
+
+          stat.total++;
+
+          if(battle.result === '무승부'){
+            stat.draws++;
+          }else if(
+            (side === battle.attacker &&
+             battle.result === '승리') ||
+            (side === battle.defender &&
+             battle.result === '패배')
+          ){
+            stat.wins++;
+          }else{
+            stat.losses++;
+          }
+        }
+      }
+
+      const users =
+        [...userMap.values()]
+          .sort((a,b)=>
+            (b.wins+b.losses) -
+            (a.wins+a.losses) ||
+            b.total-a.total ||
+            a.player.localeCompare(b.player)
+          );
+
+      $('deckResults').innerHTML = `
+        <div class="sectionHead" style="margin-top:18px">
+          <strong>
+            '${esc(clan)}' 등록 유저 ${users.length}명
+          </strong>
+          <span class="muted">
+            맹 이름 기준 검색
+          </span>
+        </div>
+
+        ${
+          users.length
+          ? `
+            <div class="clanUserGrid">
+              ${users.map(user=>{
+
+                const decided =
+                  user.wins + user.losses;
+
+                const rate =
+                  decided > 0
+                    ? (user.wins / decided) * 100
+                    : 0;
+
+                return `
+                  <div
+                    class="clanUserCard"
+                    data-user-select="${esc(user.player)}"
+                  >
+                    <div class="clanUserTop">
+                      <strong>
+                        ${esc(user.player)}
+                      </strong>
+
+                      <span>
+                        ${formatPct(rate)}
+                      </span>
+                    </div>
+
+                    <div class="muted">
+                      ${esc(user.clan)}
+                    </div>
+
+                    <div class="clanUserMeta">
+                      ${user.total}전 ·
+                      ${user.wins}승
+                      ${user.losses}패
+                      ${user.draws ? ` · ${user.draws}무` : ''}
+                    </div>
+
+                    <div class="clanUserHint">
+                      클릭하면 해당 유저 상세 검색
+                    </div>
+                  </div>
+                `;
+
+              }).join('')}
+            </div>
+          `
+          : `
+            <div class="empty">
+              '${esc(clan)}' 맹에 등록된 유저가 없습니다.
+            </div>
+          `
+        }
+      `;
+
+      return;
+    }
+
+    /*
+      닉네임을 입력한 기존 검색은 그대로 유지합니다.
+      맹 이름을 같이 입력하면 해당 맹에서의 전적만 검색합니다.
+    */
+    const relevant =
+      battles.filter(b=>{
+
+        const a =
+          b.attacker || {};
+
+        const d =
+          b.defender || {};
+
+        return (
+          (
+            a.player === nickname &&
+            (!clan || normalizeClanName(a.clan) === normalizeClanName(clan))
+          )
+          ||
+          (
+            d.player === nickname &&
+            (!clan || normalizeClanName(d.clan) === normalizeClanName(clan))
+          )
+        );
+      });
+
+    const stats =
+      calculateUserStats(
+        relevant,
+        nickname,
+        clan
+      );
+
+    const decks =
+      extractDecks(
+        relevant,
+        nickname,
+        clan
+      );
+
+    $('deckResults').innerHTML =
+      statsHTML(
+        nickname,
+        clan,
+        stats
+      ) +
+      `
+        <div
+          class="sectionHead"
+          style="margin-top:18px"
+        >
+          <strong>
+            확인된 고유 덱 ${decks.length}개
+          </strong>
+        </div>
+
+        ${
+          decks.length
+          ? decks.map((d,i)=>`
+              <div class="battle">
+                <div class="sectionHead">
+                  <strong>덱 ${i+1}</strong>
+                  <span class="muted">
+                    등록 전투 ${d.count}회
+                  </span>
+                </div>
+
+                ${miniDeck(d)}
+              </div>
+            `).join('')
+          : '<div class="empty">등록된 덱이 없습니다.</div>'
+        }
+      `;
+
+    currentBattles =
+      relevant;
+
+    visibleBattleCount =
+      10;
+
+    renderBattleList();
+
+  }catch(e){
+
+    $('searchMsg').innerHTML =
+      `<div class="err">
+        검색 실패:
+        ${esc(e.message || e)}
+      </div>`;
+  }
 }
-try{
-const battles=await loadBattles();
-const relevant=battles.filter(b=>{
-const a=b.attacker||{},d=b.defender||{};
-return (a.player===nickname&&(!clan||a.clan===clan))||(d.player===nickname&&(!clan||d.clan===clan));
+
+
+document.addEventListener('click',function(e){
+
+  const card =
+    e.target.closest('.clanUserCard');
+
+  if(!card) return;
+
+  const player =
+    card.dataset.userSelect;
+
+  if(!player) return;
+
+  $('searchUser').value =
+    player;
+
+  search();
+
 });
-const stats=calculateUserStats(relevant,nickname,clan);
-const decks=extractDecks(relevant,nickname,clan);
-$('deckResults').innerHTML=statsHTML(nickname,clan,stats)+`
-<div class="sectionHead" style="margin-top:18px">
-<strong>확인된 고유 덱 ${decks.length}개</strong>
-</div>
-${decks.length?decks.map((d,i)=>`
-<div class="battle">
-<div class="sectionHead"><strong>덱 ${i+1}</strong><span class="muted">등록 전투 ${d.count}회</span></div>
-${miniDeck(d)}
-</div>`).join(''):'<div class="empty">등록된 덱이 없습니다.</div>'}`;
-currentBattles=relevant;
-visibleBattleCount=10;
-renderBattleList();
-}catch(e){
-$('searchMsg').innerHTML=`<div class="err">검색 실패: ${esc(e.message||e)}</div>`;
-}
-}
 
 async function allBattles(){
 $('deckResults').innerHTML='';
