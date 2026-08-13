@@ -210,6 +210,72 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
   color:#84919b;
 }
 
+
+.statsPager{
+  margin-top:10px;
+  display:flex;
+  justify-content:center;
+}
+
+.statsPager button{
+  min-width:150px;
+}
+
+.navBtn.active{
+  background:#d8ae54 !important;
+  color:#101419 !important;
+  border-color:#d8ae54 !important;
+}
+
+.quick button{
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+
+.statsListMore{
+  margin-top:10px;
+}
+
+.comboRank{
+  display:grid;
+  gap:8px;
+}
+
+.comboRankItem{
+  display:grid;
+  grid-template-columns:42px 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:11px;
+  border:1px solid #2c3944;
+  border-radius:10px;
+  background:#10171e;
+}
+
+.comboRankNo{
+  font-weight:900;
+  color:#d8ae54;
+}
+
+.comboHeroes{
+  font-weight:800;
+}
+
+.comboMeta{
+  color:#87939d;
+  font-size:11px;
+  margin-top:4px;
+}
+
+@media(max-width:760px){
+  .comboRankItem{
+    grid-template-columns:32px 1fr;
+  }
+  .comboRankItem > :last-child{
+    grid-column:2;
+    text-align:left !important;
+  }
+}
+
 @media(max-width:760px){
   .statsSearchRow{
     grid-template-columns:1fr;
@@ -242,9 +308,9 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 </header>
 
 <div class="quick">
-<button id="btnRegister">⚔ 전황 등록</button>
-<button id="btnSearch" class="secondary">⌕ 유저 / 덱 검색</button>
-<button id="btnStats" class="secondary">📊 전체 통계</button>
+<button id="btnRegister" class="navBtn">⚔ 전황 등록</button>
+<button id="btnSearch" class="secondary navBtn">⌕ 유저 / 덱 검색</button>
+<button id="btnStats" class="secondary navBtn">📊 전체 통계</button>
 </div>
 
 <div id="loginCard" class="card hidden">
@@ -686,6 +752,13 @@ $('battleResults').innerHTML=`<div class="err">${esc(e.message||e)}</div>`;
    GLOBAL STATISTICS
 ========================================================= */
 
+
+function setActiveNav(id){
+  document.querySelectorAll('.navBtn').forEach(btn=>{
+    btn.classList.toggle('active',btn.id===id);
+  });
+}
+
 function normalizeHeroName(name){
   return String(name || '').trim();
 }
@@ -842,10 +915,86 @@ function formatPct(value){
 }
 
 
+function renderOpponentRows(list, type, visibleCount){
+  if(!list.length){
+    return `<div class="empty">상대 전적 데이터가 없습니다.</div>`;
+  }
+
+  const rows = list.slice(0, visibleCount).map(x=>`
+    <tr>
+      <td>${esc(x.name)}</td>
+      <td>${x.wins}승 ${x.losses}패</td>
+      <td class="${type === 'best' ? 'counterWin' : type === 'worst' ? 'counterLoss' : ''}">
+        ${formatPct(x.rate)}
+      </td>
+    </tr>
+  `).join('');
+
+  const more = visibleCount < list.length
+    ? `
+      <div class="statsPager">
+        <button class="secondary statsMoreBtn"
+          data-stats-more="${type}">
+          더보기 · 5개
+        </button>
+      </div>
+    `
+    : '';
+
+  return `
+    <table class="statsTable">
+      <thead>
+        <tr>
+          <th>상대</th>
+          <th>전적</th>
+          <th>승률</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${more}
+  `;
+}
+
+
+function renderRankRows(list, type, visibleCount){
+  if(!list.length){
+    return `<div class="empty">3전 이상인 상대 전적이 없습니다.</div>`;
+  }
+
+  const rows = list.slice(0, visibleCount).map(x=>`
+    <div class="statsRankItem">
+      <div>
+        <strong>${esc(x.name)}</strong>
+        <small>${x.wins}승 ${x.losses}패</small>
+      </div>
+      <span class="${type === 'best' ? 'counterWin' : 'counterLoss'}">
+        ${formatPct(x.rate)}
+      </span>
+    </div>
+  `).join('');
+
+  const more = visibleCount < list.length
+    ? `
+      <div class="statsPager">
+        <button class="secondary statsMoreBtn"
+          data-stats-more="${type}">
+          더보기 · 5개
+        </button>
+      </div>
+    `
+    : '';
+
+  return `
+    <div class="statsRank">${rows}</div>
+    ${more}
+  `;
+}
+
+
 function heroStatsHTML(stat){
 
-  const rate =
-    heroWinRate(stat);
+  const rate = heroWinRate(stat);
 
   const tactics =
     [...stat.tactics.entries()]
@@ -854,391 +1003,256 @@ function heroStatsHTML(stat){
 
   const opponents =
     [...stat.opponents.entries()]
-      .map(
-        ([name,data])=>({
+      .map(([name,data])=>({
+        name,
+        ...data,
+        decided:data.wins + data.losses,
+        rate:(data.wins + data.losses) > 0
+          ? (data.wins / (data.wins + data.losses)) * 100
+          : 0
+      }))
+      .filter(x=>x.decided > 0);
 
-          name,
-
-          ...data,
-
-          decided:
-            data.wins +
-            data.losses,
-
-          rate:
-            (
-              data.wins +
-              data.losses
-            ) > 0
-              ?
-                (
-                  data.wins /
-                  (
-                    data.wins +
-                    data.losses
-                  )
-                ) * 100
-              :
-                0
-
-        })
-      )
-      .filter(
-        x => x.decided > 0
-      );
+  const allOpponents =
+    opponents.sort((a,b)=>b.decided-a.decided);
 
   const bestOpponents =
     opponents
       .filter(x=>x.decided >= 3)
-      .sort(
-        (a,b)=>
-          b.rate-a.rate ||
-          b.decided-a.decided
-      )
-      .slice(0,8);
+      .sort((a,b)=>b.rate-a.rate || b.decided-a.decided);
 
   const worstOpponents =
     opponents
       .filter(x=>x.decided >= 3)
-      .sort(
-        (a,b)=>
-          a.rate-b.rate ||
-          b.decided-a.decided
-      )
-      .slice(0,8);
+      .sort((a,b)=>a.rate-b.rate || b.decided-a.decided);
+
+  window.__statsLists = {
+    opponents: allOpponents,
+    best: bestOpponents,
+    worst: worstOpponents
+  };
+
+  window.__statsVisible = {
+    opponents:5,
+    best:5,
+    worst:5
+  };
 
   return `
 
     <div class="statsHeroHeader">
-
       <div>
-
-        <div class="statsHeroName">
-          ${esc(stat.name)}
-        </div>
-
-        <div class="statsHeroSub">
-          등록 전투 ${stat.total}회
-        </div>
-
+        <div class="statsHeroName">${esc(stat.name)}</div>
+        <div class="statsHeroSub">등록 전투 ${stat.total}회</div>
       </div>
-
       <div>
-
-        <div class="muted">
-          승률
-        </div>
-
-        <div class="statsRate">
-          ${formatPct(rate)}
-        </div>
-
+        <div class="muted">승률</div>
+        <div class="statsRate">${formatPct(rate)}</div>
       </div>
-
     </div>
 
-
     <div class="statsCards">
-
       <div class="statsPanel">
         <div class="caption">전체 전투</div>
         <div class="big">${stat.total}</div>
       </div>
-
       <div class="statsPanel">
         <div class="caption">승리</div>
         <div class="big">${stat.wins}</div>
       </div>
-
       <div class="statsPanel">
         <div class="caption">패배</div>
         <div class="big">${stat.losses}</div>
       </div>
-
       <div class="statsPanel">
         <div class="caption">무승부</div>
         <div class="big">${stat.draws}</div>
       </div>
-
     </div>
-
 
     <div class="statsColumns">
 
-
       <div class="statsPanel">
-
-        <h3>
-          📜 많이 사용된 전법
-        </h3>
-
+        <h3>📜 많이 사용된 전법</h3>
         ${
           tactics.length
-            ?
-
-              `<table class="statsTable">
-
-                <thead>
-                  <tr>
-                    <th>전법</th>
-                    <th>사용</th>
-                    <th>사용률</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  ${
-                    tactics
-                      .map(
-                        ([name,count])=>{
-
-                          const pct =
-                            stat.total > 0
-                              ?
-                                (count/stat.total)*100
-                              :
-                                0;
-
-                          return `
-
-                            <tr>
-
-                              <td>
-                                ${esc(name)}
-
-                                <div class="statBar">
-                                  <span
-                                    style="width:${Math.min(pct,100)}%"
-                                  ></span>
-                                </div>
-
-                              </td>
-
-                              <td>
-                                ${count}회
-                              </td>
-
-                              <td>
-                                ${formatPct(pct)}
-                              </td>
-
-                            </tr>
-
-                          `;
-
-                        }
-                      )
-                      .join('')
-                  }
-
-                </tbody>
-
-              </table>`
-
-            :
-
-              `<div class="empty">
-                등록된 전법 데이터가 없습니다.
-              </div>`
-
+          ? `
+            <table class="statsTable">
+              <thead>
+                <tr>
+                  <th>전법</th>
+                  <th>사용</th>
+                  <th>사용률</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tactics.map(([name,count])=>{
+                  const pct = stat.total > 0 ? (count/stat.total)*100 : 0;
+                  return `
+                    <tr>
+                      <td>
+                        ${esc(name)}
+                        <div class="statBar">
+                          <span style="width:${Math.min(pct,100)}%"></span>
+                        </div>
+                      </td>
+                      <td>${count}회</td>
+                      <td>${formatPct(pct)}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `
+          : `<div class="empty">등록된 전법 데이터가 없습니다.</div>`
         }
-
       </div>
-
 
       <div class="statsPanel">
-
-        <h3>
-          ⚔ 상대 장수 전적
-        </h3>
-
-        ${
-          opponents.length
-            ?
-
-              `<table class="statsTable">
-
-                <thead>
-                  <tr>
-                    <th>상대</th>
-                    <th>전적</th>
-                    <th>승률</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  ${
-                    opponents
-                      .sort(
-                        (a,b)=>
-                          b.decided-a.decided
-                      )
-                      .slice(0,15)
-                      .map(
-                        x=>`
-
-                          <tr>
-
-                            <td>
-                              ${esc(x.name)}
-                            </td>
-
-                            <td>
-                              ${x.wins}승
-                              ${x.losses}패
-                            </td>
-
-                            <td>
-                              ${formatPct(x.rate)}
-                            </td>
-
-                          </tr>
-
-                        `
-                      )
-                      .join('')
-                  }
-
-                </tbody>
-
-              </table>`
-
-            :
-
-              `<div class="empty">
-                상대 전적 데이터가 없습니다.
-              </div>`
-
-        }
-
+        <h3>⚔ 상대 장수 전적</h3>
+        <div id="statsOpponentList">
+          ${renderOpponentRows(allOpponents,'opponents',5)}
+        </div>
         <div class="statsNote">
           상대 전적은 양쪽 덱에 함께 등장한 장수를 기준으로 계산합니다.
-          표본이 너무 작은 경우를 피하기 위해 '많이 이긴/진 장수'에서는 최소 3전 이상만 사용합니다.
         </div>
-
       </div>
-
 
     </div>
 
-
     <div class="statsColumns">
 
-
       <div class="statsPanel">
-
-        <h3>
-          🟢 많이 이기는 장수
-        </h3>
-
-        ${
-          bestOpponents.length
-            ?
-
-              `<div class="statsRank">
-
-                ${
-                  bestOpponents
-                    .map(
-                      x=>`
-
-                        <div class="statsRankItem">
-
-                          <div>
-                            <strong>
-                              ${esc(x.name)}
-                            </strong>
-
-                            <small>
-                              ${x.wins}승 ${x.losses}패
-                            </small>
-                          </div>
-
-                          <span class="counterWin">
-                            ${formatPct(x.rate)}
-                          </span>
-
-                        </div>
-
-                      `
-                    )
-                    .join('')
-                }
-
-              </div>`
-
-            :
-
-              `<div class="empty">
-                3전 이상인 상대 전적이 없습니다.
-              </div>`
-
-        }
-
+        <h3>🟢 많이 이기는 장수</h3>
+        <div id="statsBestList">
+          ${renderRankRows(bestOpponents,'best',5)}
+        </div>
       </div>
 
-
       <div class="statsPanel">
-
-        <h3>
-          🔴 많이 지는 장수
-        </h3>
-
-        ${
-          worstOpponents.length
-            ?
-
-              `<div class="statsRank">
-
-                ${
-                  worstOpponents
-                    .map(
-                      x=>`
-
-                        <div class="statsRankItem">
-
-                          <div>
-                            <strong>
-                              ${esc(x.name)}
-                            </strong>
-
-                            <small>
-                              ${x.wins}승 ${x.losses}패
-                            </small>
-                          </div>
-
-                          <span class="counterLoss">
-                            ${formatPct(x.rate)}
-                          </span>
-
-                        </div>
-
-                      `
-                    )
-                    .join('')
-                }
-
-              </div>`
-
-            :
-
-              `<div class="empty">
-                3전 이상인 상대 전적이 없습니다.
-              </div>`
-
-        }
-
+        <h3>🔴 많이 지는 장수</h3>
+        <div id="statsWorstList">
+          ${renderRankRows(worstOpponents,'worst',5)}
+        </div>
       </div>
-
 
     </div>
 
   `;
-
 }
 
+
+function collectPopularityStats(battles){
+
+  const heroUse = new Map();
+  const comboUse = new Map();
+
+  for(const battle of battles){
+
+    for(const side of [battle.attacker,battle.defender]){
+
+      if(!side || !Array.isArray(side.deck)) continue;
+
+      const names = side.deck
+        .map(h=>normalizeHeroName(h.name))
+        .filter(Boolean);
+
+      for(const name of names){
+        heroUse.set(name,(heroUse.get(name)||0)+1);
+      }
+
+      if(names.length === 3){
+        const combo = [...names].sort().join(' · ');
+        comboUse.set(combo,(comboUse.get(combo)||0)+1);
+      }
+
+    }
+  }
+
+  return {heroUse,comboUse};
+}
+
+
+function popularityHTML(battles){
+
+  const {heroUse,comboUse} =
+    collectPopularityStats(battles);
+
+  const heroes =
+    [...heroUse.entries()]
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,20);
+
+  const combos =
+    [...comboUse.entries()]
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,10);
+
+  return `
+
+    <div class="statsColumns">
+
+      <div class="statsPanel">
+        <h3>👑 많이 사용된 장수 TOP 20</h3>
+
+        ${
+          heroes.length
+          ? `
+            <table class="statsTable">
+              <thead>
+                <tr>
+                  <th>순위</th>
+                  <th>장수</th>
+                  <th>사용</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${heroes.map(([name,count],i)=>`
+                  <tr>
+                    <td>${i+1}</td>
+                    <td>${esc(name)}</td>
+                    <td>${count}회</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `
+          : `<div class="empty">등록된 장수 데이터가 없습니다.</div>`
+        }
+
+      </div>
+
+      <div class="statsPanel">
+        <h3>🔥 많이 사용된 조합 TOP 10</h3>
+
+        ${
+          combos.length
+          ? `
+            <div class="comboRank">
+              ${combos.map(([combo,count],i)=>{
+                const names = combo.split(' · ');
+                return `
+                  <div class="comboRankItem">
+                    <div class="comboRankNo">#${i+1}</div>
+                    <div>
+                      <div class="comboHeroes">${names.map(esc).join(' · ')}</div>
+                      <div class="comboMeta">동일 3장수 조합</div>
+                    </div>
+                    <strong>${count}회</strong>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `
+          : `<div class="empty">등록된 조합 데이터가 없습니다.</div>`
+        }
+
+      </div>
+
+    </div>
+
+  `;
+}
 
 async function loadGlobalStats(){
 
@@ -1275,7 +1289,11 @@ async function loadGlobalStats(){
           )
           .slice(0,20);
 
-      $('statsContent').innerHTML = `
+      $('statsContent').innerHTML =
+
+        popularityHTML(battles) +
+
+        `
 
         <div class="statsPanel">
 
@@ -1395,6 +1413,55 @@ async function loadGlobalStats(){
 }
 
 
+
+document.addEventListener('click',function(e){
+
+  const btn =
+    e.target.closest('.statsMoreBtn');
+
+  if(!btn) return;
+
+  const type =
+    btn.dataset.statsMore;
+
+  if(!window.__statsLists || !window.__statsVisible){
+    return;
+  }
+
+  window.__statsVisible[type] += 5;
+
+  const list =
+    window.__statsLists[type];
+
+  if(type === 'opponents'){
+    $('statsOpponentList').innerHTML =
+      renderOpponentRows(
+        list,
+        type,
+        window.__statsVisible[type]
+      );
+  }
+
+  if(type === 'best'){
+    $('statsBestList').innerHTML =
+      renderRankRows(
+        list,
+        type,
+        window.__statsVisible[type]
+      );
+  }
+
+  if(type === 'worst'){
+    $('statsWorstList').innerHTML =
+      renderRankRows(
+        list,
+        type,
+        window.__statsVisible[type]
+      );
+  }
+
+});
+
 async function saveBattle(){
 if(!session){
 $('loginCard').classList.remove('hidden');
@@ -1436,21 +1503,24 @@ if(show)$('saveMsg').innerHTML='';
 }
 
 $('btnRegister').onclick=()=>{
-$('registerPage').classList.remove('hidden');
-$('searchPage').classList.add('hidden');
-$('statsPage').classList.add('hidden');
+  $('registerPage').classList.remove('hidden');
+  $('searchPage').classList.add('hidden');
+  $('statsPage').classList.add('hidden');
+  setActiveNav('btnRegister');
 };
 $('btnSearch').onclick=()=>{
-$('searchPage').classList.remove('hidden');
-$('registerPage').classList.add('hidden');
-$('statsPage').classList.add('hidden');
+  $('searchPage').classList.remove('hidden');
+  $('registerPage').classList.add('hidden');
+  $('statsPage').classList.add('hidden');
+  setActiveNav('btnSearch');
 };
 
 $('btnStats').onclick=()=>{
-$('statsPage').classList.remove('hidden');
-$('registerPage').classList.add('hidden');
-$('searchPage').classList.add('hidden');
-loadGlobalStats();
+  $('statsPage').classList.remove('hidden');
+  $('registerPage').classList.add('hidden');
+  $('searchPage').classList.add('hidden');
+  setActiveNav('btnStats');
+  loadGlobalStats();
 };
 $('saveBattle').onclick=saveBattle;
 $('resetBattle').onclick=()=>resetBattle();
