@@ -226,4 +226,76 @@ export default async function handler(req, res) {
         success: false,
         error: "Gemini 응답이 JSON 형식이 아닙니다.",
         httpStatus: response.status,
-        detail: response
+        detail: responseText.substring(0, 1000)
+      });
+    }
+
+    // ----------------------------------------
+    // Gemini API 오류
+    // ----------------------------------------
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        error: "Gemini API 오류",
+        detail:
+          data?.error?.message ||
+          "Gemini API에서 오류가 발생했습니다.",
+        code:
+          data?.error?.code ||
+          response.status,
+        status:
+          data?.error?.status ||
+          "UNKNOWN",
+        model: model
+      });
+    }
+
+    // ----------------------------------------
+    // 결과 추출
+    // ----------------------------------------
+    const candidates = data?.candidates;
+
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      return res.status(502).json({
+        success: false,
+        error: "Gemini가 분석 결과를 반환하지 않았습니다.",
+        detail: JSON.stringify(data).substring(0, 2000)
+      });
+    }
+
+    const parts =
+      candidates[0]?.content?.parts || [];
+
+    const result = parts
+      .map((part) => part?.text || "")
+      .join("")
+      .trim();
+
+    if (!result) {
+      return res.status(502).json({
+        success: false,
+        error: "Gemini 분석 결과가 비어 있습니다.",
+        detail: JSON.stringify(data).substring(0, 2000)
+      });
+    }
+
+    // ----------------------------------------
+    // 성공
+    // ----------------------------------------
+    return res.status(200).json({
+      success: true,
+      result: result,
+      model: model
+    });
+
+  } catch (error) {
+
+    console.error("ANALYZE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: "분석 서버에서 오류가 발생했습니다.",
+      detail: error?.message || String(error)
+    });
+  }
+}
