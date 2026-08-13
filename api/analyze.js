@@ -1,7 +1,8 @@
 export default async function handler(req, res) {
+  // POST만 허용
   if (req.method !== "POST") {
     return res.status(405).json({
-      error: "POST 요청만 사용할 수 있습니다."
+      error: "POST 요청만 허용됩니다."
     });
   }
 
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
 
     if (!image) {
       return res.status(400).json({
-        error: "이미지가 없습니다."
+        error: "이미지가 전달되지 않았습니다."
       });
     }
 
@@ -18,145 +19,176 @@ export default async function handler(req, res) {
 
     if (!apiKey) {
       return res.status(500).json({
-        error: "GEMINI_API_KEY가 설정되지 않았습니다."
+        error: "GEMINI_API_KEY가 Vercel 환경변수에 설정되지 않았습니다."
       });
     }
 
-    // data:image/jpeg;base64,XXXX 형태라면
-    // 실제 base64 부분만 추출
+    // data:image/jpeg;base64,... 형태로 들어와도 처리
     let base64 = image;
 
     if (base64.includes(",")) {
       base64 = base64.split(",")[1];
     }
 
-    const model = "gemini-3.5-flash";
-
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      model +
-      ":generateContent?key=" +
-      encodeURIComponent(apiKey);
+    const type = mimeType || "image/jpeg";
 
     const prompt = `
-너는 삼국지 전략 게임의 전투 화면을 분석하는 전문 AI다.
+너는 삼국지 전략 게임의 전투 결과 화면을 분석하는 AI다.
 
 첨부된 스크린샷 전체를 자세히 분석해라.
 
-다음 정보를 가능한 한 정확하게 찾아서 한국어로 정리해라.
+화면에서 확인할 수 있는 정보를 최대한 정확하게 읽어서 다음 항목을 중심으로 분석해라.
 
-1. 아군과 적군 구분
-2. 아군 장수 이름
-3. 적군 장수 이름
-4. 각 장수의 병력 수
-5. 각 장수의 전투력
-6. 공격력
-7. 방어력
-8. 화면에 표시된 주요 숫자
-9. 전투 결과
-10. 전투에서 중요한 특이사항
+1. 공격측과 방어측 구분
+2. 각 진영의 장수 이름
+3. 각 장수의 레벨
+4. 병력 수치
+5. 전투 결과
+6. 전투에서 발생한 주요 수치
+7. 승패에 영향을 준 것으로 보이는 요소
+8. 화면에서 읽을 수 있는 기타 중요한 정보
 
-특히 작은 글씨와 숫자를 최대한 자세히 읽어라.
+숫자와 한자는 가능한 한 원본 화면 그대로 읽어라.
 
-이미지에서 실제로 확인할 수 없는 정보는 절대로 추측하지 말고
+확실하게 읽을 수 없는 내용은 추측하지 말고
 "확인 불가"라고 표시해라.
 
-결과는 다음 형식으로 작성해라.
+다음 형식으로 한국어로 답변해라.
 
 [전투 결과]
-- 승패:
-- 전투력:
-- 주요 결과:
+승리/패배/확인 불가
 
-[아군]
-- 장수:
-- 병력:
-- 전투력:
-- 주요 수치:
+[공격측]
+장수:
+- 이름 / 레벨 / 병력
 
-[적군]
-- 장수:
-- 병력:
-- 전투력:
-- 주요 수치:
+[방어측]
+장수:
+- 이름 / 레벨 / 병력
 
-[종합 분석]
-전투 화면에서 확인되는 중요한 내용을 설명해라.
+[주요 전투 수치]
+- 항목:
+- 수치:
+
+[전투 분석]
+화면에서 확인되는 내용을 바탕으로 간단하고 정확하게 설명
+
+[판독 신뢰도]
+높음 / 보통 / 낮음
+
+절대로 화면에 없는 정보를 만들어내지 마라.
 `;
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+    // Gemini API 호출 함수
+    async function callGemini(model) {
+      const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const body = {
         contents: [
           {
             parts: [
               {
-                inline_data: {
-                  mime_type: mimeType || "image/jpeg",
-                  data: base64
-                }
+                text: prompt
               },
               {
-                text: prompt
+                inline_data: {
+                  mime_type: type,
+                  data: base64
+                }
               }
             ]
           }
-        ]
-      })
-    });
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2000
+        }
+      };
 
-    const raw = await response.text();
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
 
-    // Gemini API 자체에서 오류가 발생한 경우
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: "Gemini API 오류: " + raw
+      const text = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return {
+          ok: false,
+          status: response.status,
+          error: `Gemini가 JSON이 아닌 응답을 반환했습니다: ${text.slice(0, 300)}`
+        };
+      }
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          status: response.status,
+          error: data?.error?.message || "Gemini API 오류"
+        };
+      }
+
+      const result =
+        data?.candidates?.[0]?.content?.parts
+          ?.map(part => part.text || "")
+          .join("")
+          .trim();
+
+      if (!result) {
+        return {
+          ok: false,
+          status: 500,
+          error: "Gemini가 분석 결과를 반환하지 않았습니다."
+        };
+      }
+
+      return {
+        ok: true,
+        result,
+        model
+      };
+    }
+
+    // ---------------------------------------
+    // 1차: gemini-3.6-flash
+    // ---------------------------------------
+    let result = await callGemini("gemini-3.6-flash");
+
+    if (result.ok) {
+      return res.status(200).json({
+        success: true,
+        result: result.result,
+        model: result.model
       });
     }
 
-    let result;
+    // ---------------------------------------
+    // 503 / 429 / 404 등 일시적인 오류라면
+    // 잠깐 기다렸다가 한 번 더 시도
+    // ---------------------------------------
+    if ([429, 500, 502, 503, 504].includes(result.status)) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-    try {
-      result = JSON.parse(raw);
-    } catch (parseError) {
-      return res.status(500).json({
-        error: "Gemini 응답을 JSON으로 변환할 수 없습니다."
-      });
+      result = await callGemini("gemini-3.6-flash");
+
+      if (result.ok) {
+        return res.status(200).json({
+          success: true,
+          result: result.result,
+          model: result.model,
+          retry: true
+        });
+      }
     }
 
-    const text =
-      result &&
-      result.candidates &&
-      result.candidates[0] &&
-      result.candidates[0].content &&
-      result.candidates[0].content.parts
-        ? result.candidates[0].content.parts
-            .map(function (part) {
-              return part.text || "";
-            })
-            .join("\n")
-            .trim()
-        : "";
-
-    if (!text) {
-      return res.status(500).json({
-        error: "Gemini에서 판독 결과를 받지 못했습니다.",
-        raw: result
-      });
-    }
-
-    return res.status(200).json({
-      text: text
-    });
-
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      error: "서버 오류: " + (error.message || "알 수 없는 오류")
-    });
-  }
-}
+    // ---------------------------------------
+    // 2차: 다른 Flash 모델로 자동 전환
+    //
