@@ -485,6 +485,22 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 }
 
 @media(max-width:760px){.quick,.grid2{grid-template-columns:1fr}.heroGrid{grid-template-columns:1fr 1fr}.heroGrid .nameField{grid-column:1/-1}.techGrid,.cards,.statsGrid{grid-template-columns:1fr}.battleSummary{align-items:flex-start;flex-direction:column}.battleSummary .date{white-space:normal}}
+
+.siteCreatorCredit{
+  width:100%;
+  box-sizing:border-box;
+  text-align:center;
+  padding:22px 12px 28px;
+  color:#64727e;
+  font-size:10px;
+  letter-spacing:.08em;
+}
+
+.siteCreatorCredit strong{
+  color:#8e9aa4;
+  font-weight:700;
+}
+
 </style>
 </head>
 <body>
@@ -527,7 +543,7 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 <div class="sectionHead"><strong>⚔ 공격자</strong></div>
 <div class="grid2">
 <div class="field"><label>유저 닉네임</label><input id="attackerName" placeholder="토리아빠"></div>
-<div class="field"><label>맹 이름</label><input id="attackerClan" placeholder="별빛"></div>
+<div class="field"><label>맹 이름</label><input id="attackerClan" placeholder="입력"></div>
 </div>
 <div id="attackerHeroes"></div>
 </div>
@@ -536,7 +552,7 @@ input:focus,select:focus{outline:none;border-color:#d8ae54}
 <div class="sectionHead"><strong>🛡 방어자</strong></div>
 <div class="grid2">
 <div class="field"><label>유저 닉네임</label><input id="defenderName" placeholder="멸망"></div>
-<div class="field"><label>맹 이름</label><input id="defenderClan" placeholder="낙화"></div>
+<div class="field"><label>맹 이름</label><input id="defenderClan" placeholder="입력"></div>
 </div>
 <div id="defenderHeroes"></div>
 </div>
@@ -2522,5 +2538,10 @@ if(s)$('loginCard').classList.add('hidden');
 });
 })();
 </script>
+
+<footer id="siteCreatorCredit" class="siteCreatorCredit">
+  제작자 <strong>토리아빠</strong>
+</footer>
+
 </body>
 </html>
