@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>수라 전투부대</title>
+<!-- v2.0: same 3-general deck uses latest promotion/level/tactics state -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
@@ -229,11 +230,15 @@ return !!side.player&&!!side.clan&&side.deck.every(h=>h.name);
 }
 
 function signature(deck){
-return JSON.stringify((deck||[]).map(h=>({
-name:(h.name||'').trim(),
-level:Number(h.level||0),
-promotion:Number(h.promotion||0),
-tactics:(h.tactics||[]).map(x=>x.trim()).sort()
+
+  return JSON.stringify(
+    (deck || [])
+      .map(hero =>
+        String(hero.name || '').trim()
+      )
+      .sort()
+  );
+
 })));
 }
 
@@ -365,15 +370,109 @@ return `
 </div>`;
 }
 
-function extractDecks(battles,nickname,clan=''){
-const map=new Map();
-for(const b of battles){
-for(const side of [b.attacker,b.defender]){
-if(!side||side.player!==nickname)continue;
-if(clan&&side.clan!==clan)continue;
-const key=signature(side.deck);
-if(!map.has(key))map.set(key,{...side,last:b.created_at,count:1});
-else map.get(key).count++;
+function extractDecks(
+  battles,
+  nickname,
+  clan = ''
+){
+
+  const map = new Map();
+
+  /*
+    battles는 최신순으로 들어온다고 가정한다.
+    같은 3장수 조합은 하나의 덱으로 취급한다.
+
+    장수 이름만 덱의 식별값이다.
+    레벨 / 승급 / 전법은 덱 식별에 사용하지 않는다.
+
+    따라서:
+      8/1 장보(승급1) · 장량(승급1) · 장각(승급1)
+      8/3 장보(승급2) · 장량(승급2) · 장각(승급3)
+
+    은 같은 덱이며,
+    검색 결과에는 8/3의 최신 상태가 표시된다.
+
+    단, 실제 전투 기록에는 각 전투 당시의
+    승급/레벨/전법이 그대로 보존된다.
+  */
+
+  for(const battle of battles){
+
+    const sides = [
+      battle.attacker,
+      battle.defender
+    ];
+
+    for(const side of sides){
+
+      if(!side){
+        continue;
+      }
+
+      if(side.player !== nickname){
+        continue;
+      }
+
+      if(
+        clan &&
+        side.clan !== clan
+      ){
+        continue;
+      }
+
+      if(
+        !Array.isArray(side.deck) ||
+        side.deck.length !== 3
+      ){
+        continue;
+      }
+
+      /*
+        같은 장수 3명이면 같은 덱.
+        승급/레벨/전법은 여기서 제외된다.
+      */
+      const key = signature(side.deck);
+
+      /*
+        battles가 최신순이므로
+        같은 key가 처음 등장한 side가 가장 최신 상태다.
+      */
+      if(!map.has(key)){
+
+        map.set(
+          key,
+          {
+            ...side,
+            last: battle.created_at,
+            count: 1
+          }
+        );
+
+      }
+      else{
+
+        /*
+          과거에 같은 덱이 다시 등장한 것.
+          이미 최신 상태를 저장했으므로
+          현재 표시용 덱은 변경하지 않고
+          사용 횟수만 증가시킨다.
+        */
+        map.get(key).count++;
+
+      }
+
+    }
+
+  }
+
+  return [
+    ...map.values()
+  ].sort(
+    (a,b) =>
+      new Date(b.last) -
+      new Date(a.last)
+  );
+
 }
 }
 return [...map.values()].sort((a,b)=>new Date(b.last)-new Date(a.last));
