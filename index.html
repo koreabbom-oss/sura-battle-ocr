@@ -1414,13 +1414,13 @@ async function loadGlobalStats(){
           .sort((a,b)=>b[1]-a[1]);
 
       const top10PopularHeroes =
-        popularHeroes.slice(0,10);
+        popularHeroes.slice(0,5);
 
       const top10WinRate =
-        ranking.slice(0,10);
+        ranking.slice(0,5);
 
       const top10Combos =
-        popularCombos.slice(0,10);
+        popularCombos.slice(0,5);
 
       window.__globalRankingData = {
         popularHeroes,
@@ -1429,9 +1429,9 @@ async function loadGlobalStats(){
       };
 
       window.__globalRankingVisible = {
-        popularHeroes:10,
-        ranking:10,
-        popularCombos:10
+        popularHeroes:5,
+        ranking:5,
+        popularCombos:5
       };
 
       const rankClass = i =>
@@ -1471,7 +1471,7 @@ async function loadGlobalStats(){
               ? `
                 <div class="topMoreWrap">
                   <button class="secondary globalRankMoreBtn" data-global-more="popularHeroes">
-                    더보기 · 10개
+                    더보기 · 5개
                   </button>
                 </div>
               `
@@ -1499,6 +1499,19 @@ async function loadGlobalStats(){
                 : `<div class="empty">등록된 조합 데이터가 없습니다.</div>`
               }
             </div>
+
+            ${
+              popularCombos.length > 5
+              ? `
+                <div class="topMoreWrap">
+                  <button class="secondary globalRankMoreBtn" data-global-more="popularCombos">
+                    더보기 · 5개
+                  </button>
+                </div>
+              `
+              : ''
+            }
+
           </div>
 
         </div>
@@ -1528,7 +1541,7 @@ async function loadGlobalStats(){
             ? `
               <div class="topMoreWrap">
                 <button class="secondary globalRankMoreBtn" data-global-more="ranking">
-                  더보기 · 10개
+                  더보기 · 5개
                 </button>
               </div>
             `
@@ -1627,6 +1640,30 @@ document.addEventListener('click',function(e){
       btn.remove();
     }
   }
+
+
+  if(type === 'popularCombos'){
+
+    const list = data.popularCombos;
+
+    $('popularCombosList').innerHTML =
+      list.slice(0,visible[type]).map(([combo,count],i)=>{
+        const names = combo.split(' · ');
+        return `
+          <div class="rankItem ${rankClass(i)}">
+            <div class="rankBadge">${rankBadge(i)}</div>
+            <div class="rankTitle">${names.map(esc).join(' · ')}</div>
+            <div class="rankMeta">동일 3장수 조합</div>
+            <div class="rankValue">${count}회</div>
+          </div>
+        `;
+      }).join('');
+
+    if(visible[type] >= list.length){
+      btn.remove();
+    }
+  }
+
 
   if(type === 'ranking'){
 
