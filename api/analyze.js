@@ -8,8 +8,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Vercel에서 JSON으로 들어온 경우와
-    // 문자열로 들어온 경우 모두 처리
+    // ----------------------------------------
+    // 요청 데이터 처리
+    // ----------------------------------------
+
     let body = req.body;
 
     if (typeof body === "string") {
@@ -25,7 +27,6 @@ export default async function handler(req, res) {
 
     const { image, mimeType } = body || {};
 
-    // 이미지 확인
     if (!image) {
       return res.status(400).json({
         success: false,
@@ -33,7 +34,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // Vercel 환경변수에서 API KEY 가져오기
+    // ----------------------------------------
+    // Gemini API KEY
+    // ----------------------------------------
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -49,8 +53,6 @@ export default async function handler(req, res) {
 
     let base64 = image;
 
-    // 혹시 data:image/jpeg;base64, 형태로 들어오면
-    // 앞부분을 제거
     if (base64.includes(",")) {
       base64 = base64.split(",")[1];
     }
@@ -58,7 +60,7 @@ export default async function handler(req, res) {
     const imageMimeType = mimeType || "image/jpeg";
 
     // ----------------------------------------
-    // Gemini에게 전달할 분석 요청
+    // 분석 프롬프트
     // ----------------------------------------
 
     const prompt = `
@@ -66,36 +68,37 @@ export default async function handler(req, res) {
 
 첨부된 이미지는 게임의 전투 결과 화면이다.
 
-화면 전체를 자세하게 보고 다음 정보를 최대한 정확하게 판독해라.
+화면 전체를 자세하게 확인하고 실제로 보이는 정보만 판독해라.
 
 [1. 전투 결과]
 - 승리
 - 패배
-- 또는 확인 불가
+- 확인 불가
 
 [2. 공격측]
-- 장수 이름
-- 장수 레벨
+각 장수에 대해:
+- 이름
+- 레벨
 - 병력 수치
 - 화면에 표시된 주요 수치
 
 [3. 방어측]
-- 장수 이름
-- 장수 레벨
+각 장수에 대해:
+- 이름
+- 레벨
 - 병력 수치
 - 화면에 표시된 주요 수치
 
 [4. 주요 전투 수치]
-화면 중앙과 각 장수 아래에 표시된 숫자와 효과를 가능한 한 정확하게 읽어라.
+화면 중앙 및 각 장수 아래에 표시된 숫자와 효과를 최대한 정확하게 읽어라.
 
 [5. 전투 분석]
-왜 승리 또는 패배했는지 화면에서 확인되는 정보를 바탕으로 간단하게 분석해라.
+화면에서 확인되는 정보를 근거로 승리 또는 패배 원인을 간단히 설명해라.
 
 [6. 판독 신뢰도]
 높음 / 보통 / 낮음
 
-중요한 규칙:
-
+중요:
 - 이미지에 실제로 보이는 정보만 사용해라.
 - 보이지 않는 숫자나 이름을 추측하지 마라.
 - 읽기 어려운 내용은 "확인 불가"라고 표시해라.
@@ -132,4 +135,149 @@ export default async function handler(req, res) {
 2.
 이름:
 레벨:
-병
+병력:
+
+3.
+이름:
+레벨:
+병력:
+
+[주요 전투 수치]
+-
+
+[전투 분석]
+-
+
+[판독 신뢰도]
+-
+`;
+
+    // ----------------------------------------
+    // Gemini 모델
+    // ----------------------------------------
+
+    const model = "gemini-3.1-flash-lite";
+
+    const apiUrl =
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+    const requestBody = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: prompt
+            },
+            {
+              inline_data: {
+                mime_type: imageMimeType,
+                data: base64
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: 2500
+      }
+    };
+
+    // ----------------------------------------
+    // Gemini 호출
+    // 503 / 429 발생 시 자동 재시도
+    // ----------------------------------------
+
+    let response;
+    let responseText = "";
+
+    const maxRetries = 3;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      responseText = await response.text();
+
+      // 정상 응답
+      if (response.ok) {
+        break;
+      }
+
+      // 서버 과부하 / 요청 제한이면 잠시 기다렸다가 재시도
+      if (response.status === 429 || response.status === 503) {
+        if (attempt < maxRetries - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1500 * (attempt + 1))
+          );
+          continue;
+        }
+      }
+
+      // 그 외 오류는 바로 종료
+      break;
+    }
+
+    // ----------------------------------------
+    // Gemini 응답 JSON 처리
+    // ----------------------------------------
+
+    let data;
+
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      return res.status(502).json({
+        success: false,
+        error: "Gemini가 올바른 JSON 응답을 반환하지 않았습니다.",
+        detail: responseText.substring(0, 500)
+      });
+    }
+
+    // ----------------------------------------
+    // Gemini API 오류
+    // ----------------------------------------
+
+    if (!response.ok) {
+      const geminiMessage =
+        data?.error?.message ||
+        "Gemini API에서 알 수 없는 오류가 발생했습니다.";
+
+      return res.status(response.status).json({
+        success: false,
+        error: "Gemini API 오류",
+        detail: geminiMessage,
+        code: data?.error?.code || response.status,
+        status: data?.error?.status || "UNKNOWN",
+        model: model
+      });
+    }
+
+    // ----------------------------------------
+    // 결과 확인
+    // ----------------------------------------
+
+    const candidates = data?.candidates;
+
+    if (!candidates || candidates.length === 0) {
+      return res.status(502).json({
+        success: false,
+        error: "Gemini가 분석 결과를 반환하지 않았습니다.",
+        detail: JSON.stringify(data).substring(0, 1000)
+      });
+    }
+
+    const parts = candidates[0]?.content?.parts || [];
+
+    const result = parts
+      .map((part) => part?.text || "")
+      .join("")
+      .trim();
+
+    if (!
